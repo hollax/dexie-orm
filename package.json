@@ -1,0 +1,18 @@
+{
+  "name": "ray-dexie-model",
+  "version": "1.0.0",
+  "description": "Base class to map to indexedDb dexie library",
+  "main": "index.js",
+  "dependencies": {
+    "dexie": "^2.0.1"
+  },
+  "scripts": {
+    "test": "mocha test/index.js"
+  },
+  "keywords": [
+    "dexie",
+    "oop"
+  ],
+  "author": "Wakeel Ogunsanya",
+  "license": "ISC"
+}
