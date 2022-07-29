@@ -1,16 +1,18 @@
-import Dexie from 'dexie';
+const Dexie = require('dexie');
 
 let lastInserts = {};
 
 class RayDexieModel {
+
 
     /**
      * Setup class propertis use RayDexieModel.getColumns() returned value
      * @param {Object} data Updates class properties
      */
     constructor(data = {}) {
-        
-        var columns = this.constructor.getColumns();
+
+        let columns = this.constructor.getColumns();
+
         // set properties
         for (let i of columns) {
             if (data && data.hasOwnProperty(i)) {
@@ -29,26 +31,36 @@ class RayDexieModel {
 
     }
 
+    static _getSaveData(obj, data) {
+        let row = {};
+        let source = data || obj;
+        let cols = data ? Object.keys(data) : this.getColumns();
+        cols.map(col => row[col] = source[col]);
+        return row;
+    }
     /**
      * Saves the class property values
      @returns {Promise} put promise
      */
-    save() {
+    save(data) {
         var table = this.constructor.getTableConnection();
-        var status;
-
+        let status, row;
         this._beforeSave();
 
         //update
         if (this.id) {
-
-            status = table.put(this); // Will only save own props.
+            row = this.constructor._getSaveData(this, data);
+            status = table.update(this.id, row); // Will only save own props.
         } else {
 
             if (this.hasOwnProperty('created')) {
                 this.created = new Date();
             }
-            status = table.add(this);
+
+            row = this.constructor._getSaveData(this, data);
+            delete row.id;
+
+            status = table.add(row);
             status.then((id) => {
                 this.id = id;
                 this.constructor.setLastInsert(id);
@@ -73,13 +85,24 @@ class RayDexieModel {
 
     /**
      * Retrive single record 
-     * @param {Number} id Record id
-     * @returns {Promise} reolves to model instance
+     * @param {Number|String} id Record id
+     * @returns {Promise<this>} reolves to model instance
      */
     static find(id) {
         var table = this.getTableConnection();
 
-        return table.get(parseInt(id));
+        return table.get(id);
+    }
+
+     /**
+     * Retrive single record 
+     * @param {Number} id Record id
+     * @returns {Promise} reolves to model instance
+     */
+      static first(where = {}) {
+        var table = this.whereClause || this.getTableConnection();
+        
+        return table.where(where).first();
     }
 
 
@@ -90,7 +113,7 @@ class RayDexieModel {
      */
     static count(where) {
 
-        var table = this.getTableConnection();
+        var table = this.whereClause || this.getTableConnection();
 
         if (where) {
             table = table.where(where);
@@ -105,7 +128,7 @@ class RayDexieModel {
      * @param {Function} filter
      @returns {Promise} count promise
      */
-    static countIn(column, values , filter) {
+    static countIn(column, values, filter) {
 
         var table = this.getTableConnection();
 
@@ -117,6 +140,51 @@ class RayDexieModel {
 
         return table.count();
     }
+
+        /**
+     * Get multiple record
+     * @param {Dexie[table]} where
+     * @param {Object} where
+     * @param {Number} limit
+     * @param {Number} page
+     * @param {String} order name of column to use in dorting
+     * @param {Boolean} desc Whether to sort indescending order
+     */
+         static fetch(table, limit, page, order, desc) {
+            let query = table;
+    
+            if (page) {
+                var offset = (page - 1) * limit;
+                query = query.offset(offset)
+            }
+    
+            if (limit) {
+                query = query.limit(limit)
+            }
+    
+    
+            if (order) {
+    
+                if (desc) {
+                    query = query.desc();
+                }
+                else {
+                    // query = query.reverse();
+                }
+    
+             
+                return query.sortBy(order);
+            }
+    
+            //query = query.distinct();
+            if(this.whereClause){
+                console.log(this.whereClause)
+            }
+    
+            return query.toArray();
+        }
+
+        
     /**
      * Get multiple record
      * @param {Object} where
@@ -127,15 +195,22 @@ class RayDexieModel {
      */
     static all(where, limit, page, order, desc) {
 
-        var table = this.getTableConnection();
+        var table = this.whereClause || this.getTableConnection();
 
         if (where) {
             table = table.where(where);
         }
+
         return this.fetch(table, limit, page, order, desc);
 
     }
 
+    static where(index){
+         let whereClause = this.getTableConnection().where(index);
+        //save it to allow building custom where with all() metho
+        //  this.whereClause = whereClause;
+        return whereClause;
+    }
     /**
     * Get multiple record where keyPath value in specified values
     * @param {String|Array} column
@@ -148,9 +223,8 @@ class RayDexieModel {
     */
     static in(column, values, filter, limit, page, order, desc) {
 
-        var table = this.getTableConnection();
+        var table = this.whereClause || this.getTableConnection();
 
-      
 
         table = table.where(column).anyOf(values);
 
@@ -180,47 +254,6 @@ class RayDexieModel {
         return this.fetch(table, limit, page, order, desc);
     }
 
-    /**
-     * Get multiple record
-     * @param {Dexie[table]} where
-     * @param {Object} where
-     * @param {Number} limit
-     * @param {Number} page
-     * @param {String} order name of column to use in dorting
-     * @param {Boolean} desc Whether to sort indescending order
-     */
-    static fetch(table, limit, page, order, desc) {
-        var query = table;
-
-        if (page) {
-            var offset = (page - 1) * limit;
-            query = query.offset(offset)
-        }
-
-        if (limit) {
-            query = query.limit(limit)
-        }
-
-        
-        if (order) {
-
-           
-
-            if (desc) {
-                query =  query.desc(); 
-            }
-            else {
-               // query = query.reverse();
-            }
-
-            return query.sortBy(order);
-        }
-
-        query = (query || table).distinct();
-
-
-        return query.toArray();
-    }
 
     /**
      * Insert mutiple record
@@ -252,7 +285,7 @@ class RayDexieModel {
      * @param {any} keys
      */
     static deleteAll(keys) {
-        var table = this.getTableConnection();
+        var table = this.whereClause || this.getTableConnection();
         return table.bulkDelete(keys);
     }
 
@@ -286,18 +319,80 @@ class RayDexieModel {
      * Should be declared by derived class
      @returns {Dexie[table]}
      */
-    static getTableConnection() {
-
+    static setTableConnection(db) {
+        this.connection = db;
     }
 
+    /**
+     * 
+     * @returns {Dexie.table}
+     */
+    static getTableConnection() {
+        return this.connection;
+    }
 
+    /**
+     * 
+     * @param {Dexie} db 
+     * @param {String} tableName 
+     */
+    static setup(db, tableName) {
+        let schema = this.getSchema();
+
+
+        if (Array.isArray(schema)) {
+
+            schema.map((schema) => {
+
+                if (!schema.version || !schema.columns) {
+                    console.warn('Invalid schema configuraiont: ', this.getTableName(), schema)
+                    return;
+                }
+
+                let result = db.version(schema.version).stores({
+                    [tableName]: schema.columns,
+                });
+                if (typeof schema.upgrade === 'function') {
+                    result.upgrde(schema.upgrade);
+                }
+            });
+        }
+
+        this.connection = db[tableName];
+        this.tableName = tableName;
+        this.connection.mapToClass(this);
+    }
+
+    /**
+     * 
+     * @returns {}
+     * 
+     * {
+     *    columns: string,
+     *    version: number
+     * }
+     */
+    static getSchema() {
+        return [
+
+        ];
+    }
 
     /**
        Should be declared by derived class
      * @returns {Array}
      */
     static getColumns() {
-        return [];
+        let store = this.getTableConnection();
+        let cols = [store.schema.primKey.name];
+
+        store.schema.indexes.map((col) => {
+            if (!col.compound) {
+                cols.push(col.name);
+            }
+        });
+
+        return cols;
     }
 
     /**
@@ -306,7 +401,7 @@ class RayDexieModel {
      * @returns {String}
      */
     static getTableName() {
-        return this.name;
+        return this.tableName;
     }
 
 
@@ -329,7 +424,8 @@ class RayDexieModel {
 
     }
 
+
 }
 
 
-export default RayDexieModel;
+module.exports = RayDexieModel;

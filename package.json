@@ -2,17 +2,21 @@
   "name": "ray-dexie-model",
   "version": "1.0.0",
   "description": "Base class to map to indexedDb dexie library",
-  "main": "index.js",
+  "main": "src/index.js",
   "dependencies": {
     "dexie": "^2.0.1"
   },
   "scripts": {
-    "test": "mocha test/index.js"
+    "test": "npx jest"
   },
   "keywords": [
     "dexie",
     "oop"
   ],
   "author": "Wakeel Ogunsanya",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "fake-indexeddb": "^4.0.0",
+    "jest": "^28.1.3"
+  }
 }
