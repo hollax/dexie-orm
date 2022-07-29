@@ -31,3 +31,14 @@ Somewhere in the app.
     User.setup(db, 'users');
 
 ```
+
+
+## Testing
+
+The library uses fake-indexeddb and jest for Testing.
+
+Running the test:
+```
+ npm test
+
+```
