@@ -6,7 +6,7 @@ Simple ORM model for [dexiejs](https://dexie.org/) (A Minimalistic Wrapper for I
 ## Quick Reference
 
 ```javascript
-const Model = require('@hollax/dexie-modex');
+const Model = require('@hollax/dexie-orm');
 
 class Post extend Model{
 
