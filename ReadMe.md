@@ -2,8 +2,7 @@
 
 ## Introduction
 
-Simple ORM model for [dexiejs](https://dexie.org/)
-
+Simple ORM model for [dexiejs](https://dexie.org/) (A Minimalistic Wrapper for IndexedDB)
 ## Quick Reference
 
 ```javascript
