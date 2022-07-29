@@ -1,3 +1,5 @@
+![Test](https://github.com/github/docs/actions/workflows/test.yml/badge.svg)
+
 ## Introduction
 
 Simple ORM model for [dexiejs](https://dexie.org/)
