@@ -1,7 +1,7 @@
 {
-  "name": "ray-dexie-model",
+  "name": "@hollax/dexie-orm",
   "version": "1.0.0",
-  "description": "Base class to map to indexedDb dexie library",
+  "description": "Simple ORM for dexie js",
   "main": "src/index.js",
   "dependencies": {
     "dexie": "^2.0.1"
