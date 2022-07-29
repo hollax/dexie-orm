@@ -40,7 +40,7 @@ Somewhere in the app.
 The library uses fake-indexeddb and jest for Testing.
 
 Running the test:
-```
+```javascript
  npm test
 
 ```
