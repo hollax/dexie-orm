@@ -6,7 +6,7 @@ Simple ORM model for [dexiejs](https://dexie.org/)
 
 ## Example
 
-```[javascript]
+```javascript
 const Model = require('@hollax/dexie-modex');
 
 class Post extend Model{
@@ -26,7 +26,7 @@ class Post extend Model{
 
 Somewhere in the app.
 
-```
+```javascript
     let db = new Dexie("MyDatabase");
     Post.setup(db, 'posts');
     //register other models too
