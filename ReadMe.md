@@ -6,7 +6,7 @@ Simple ORM model for [dexiejs](https://dexie.org/) (A Minimalistic Wrapper for I
 ## Quick Reference
 
 ```javascript
-const Model = require('@hollax/dexie-orm');
+const {Model} = require('@hollax/dexie-orm');
 
 class Post extend Model{
 
@@ -46,7 +46,7 @@ Somewhere in the app:
     });
 ```
 
-### Get sigle record
+### Get single record
 
 ```javascript
     let post = await Post.find(1)
