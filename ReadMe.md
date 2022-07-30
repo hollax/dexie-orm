@@ -3,10 +3,17 @@
 ## Introduction
 
 Simple ORM model for [dexiejs](https://dexie.org/) (A Minimalistic Wrapper for IndexedDB)
+
+## Installation
+
+```
+  npm i @hollax/dexie-orm dexie
+
+```
 ## Quick Reference
 
 ```javascript
-const {Model} = require('@hollax/dexie-orm');
+const {Model, setup} = require('@hollax/dexie-orm');
 
 class Post extend Model{
 
@@ -14,22 +21,29 @@ class Post extend Model{
         return [
             {
                 version: 1,
-                columns: "id++, title, body, **tags"
+                columns: "id++, **tags"
             }
         ];
     }
 
 }
 
+
 ```
+
+> NOTE: Don’t declare all columns like in SQL. You only declare properties you want to index, that is
 
 Somewhere in the app:
 
 ```javascript
+    const Dexie = require('dexie');
+
     let db = new Dexie("MyDatabase");
-    Post.setup(db, 'posts');
-    //setup other models too
-    User.setup(db, 'users');
+    setup(db, {
+        posts: Post,
+        //register other models
+        users: User
+    );
 
 ```
 

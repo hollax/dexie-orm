@@ -2,26 +2,24 @@ const Dexie = require('dexie');
 
 let lastInserts = {};
 
-class RayDexieModel {
+class DexieModel {
 
 
     /**
-     * Setup class propertis use RayDexieModel.getColumns() returned value
+     * Setup class propertis use DexieModel.getColumns() returned value
      * @param {Object} data Updates class properties
      */
     constructor(data = {}) {
+       this.populate(data);
+    }
 
-        let columns = this.constructor.getColumns();
-
+    populate(data){
         // set properties
-        for (let i of columns) {
-            if (data && data.hasOwnProperty(i)) {
+        for (let i in data) {
+            if(typeof data[i] !== 'function'){
                 this[i] = data[i];
-            } else {
-                this[i] = null;
             }
         }
-
     }
 
     _beforeSave() {
@@ -33,9 +31,8 @@ class RayDexieModel {
 
     static _getSaveData(obj, data) {
         let row = {};
-        let source = data || obj;
-        let cols = data ? Object.keys(data) : this.getColumns();
-        cols.map(col => row[col] = source[col]);
+        let cols = Object.keys(obj);
+        cols.map(col => row[col] = obj[col]);
         return row;
     }
     /**
@@ -50,7 +47,7 @@ class RayDexieModel {
         //update
         if (this.id) {
             row = this.constructor._getSaveData(this, data);
-            status = table.update(this.id, row); // Will only save own props.
+            status = table.update(this.id, this); // Will only save own props.
         } else {
 
             if (this.hasOwnProperty('created')) {
@@ -205,6 +202,13 @@ class RayDexieModel {
 
     }
 
+    static filter(callback){
+        let whereClause = this.getTableConnection().filter(callback);
+       //save it to allow building custom where with all() metho
+       //  this.whereClause = whereClause;
+       return whereClause;
+   }
+
     static where(index){
          let whereClause = this.getTableConnection().where(index);
         //save it to allow building custom where with all() metho
@@ -331,37 +335,6 @@ class RayDexieModel {
         return this.connection;
     }
 
-    /**
-     * 
-     * @param {Dexie} db 
-     * @param {String} tableName 
-     */
-    static setup(db, tableName) {
-        let schema = this.getSchema();
-
-
-        if (Array.isArray(schema)) {
-
-            schema.map((schema) => {
-
-                if (!schema.version || !schema.columns) {
-                    console.warn('Invalid schema configuraiont: ', this.getTableName(), schema)
-                    return;
-                }
-
-                let result = db.version(schema.version).stores({
-                    [tableName]: schema.columns,
-                });
-                if (typeof schema.upgrade === 'function') {
-                    result.upgrde(schema.upgrade);
-                }
-            });
-        }
-
-        this.connection = db[tableName];
-        this.tableName = tableName;
-        this.connection.mapToClass(this);
-    }
 
     /**
      * 
@@ -428,4 +401,4 @@ class RayDexieModel {
 }
 
 
-module.exports = RayDexieModel;
+module.exports = DexieModel;

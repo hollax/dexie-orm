@@ -1,6 +1,7 @@
 require("fake-indexeddb/auto");
 
 const Dexie = require('dexie');
+const setup = require("../src/setup");
 const EmployeeModel = require('./EmployeeModel').default;
 const PostModel = require('./PostModel').default;
 const fixtures = require('./fixtures');
@@ -14,13 +15,15 @@ describe('setup', ()=>{
 
         expect(PostModel.connection).toEqual(undefined);
         expect(PostModel.tableName).toEqual(undefined);
-        PostModel.setup(db, 'posts');
+        setup(db, {
+            posts: PostModel,
+            employees: EmployeeModel
+        });
         expect(PostModel.connection).toBeDefined();
         expect(PostModel.tableName).toBeDefined();
     });
 
     test('create store for second model', ()=>{
-        EmployeeModel.setup(db, 'employees');
         expect(EmployeeModel.connection).toBeDefined();
         expect(EmployeeModel.tableName).toBeDefined();
     })
@@ -42,21 +45,14 @@ describe('getSchema', ()=>{
     });
 });
 
-describe('getColumns', ()=>{
 
-    test('save new item in store', function(){
-        let columns = PostModel.getColumns();
-        expect(columns).toBeDefined();
-        expect(columns).toHaveLength(7);
-        expect(columns).toStrictEqual(["id", "title", "body", "tags", "created", "deleted", "published"])
-    });
-});
 
 describe('save', ()=>{
 
     test('save new item in store', async function(){
         let post = new PostModel({
-            title: 'Foo'
+            title: 'Foo',
+            body: 'Test body'
         });
         expect(post).toBeDefined();
         expect(post.title).toEqual('Foo');
@@ -89,6 +85,7 @@ describe('find', ()=>{
         let post = await PostModel.find(1);
         expect(post).toBeInstanceOf(PostModel);
         expect(post.title).toEqual('Foo');
+        expect(post.body).toEqual('Test body');
     });
     test('return undefined for non existing', async function(){
         let post = await PostModel.find(55);

@@ -7,15 +7,15 @@ class PostModel extends Model{
         return [
             {
                 version: 1,
-                columns: "++id, title, body"
+                columns: "++id"
             },
             {
                 version: 2,
-                columns: "++id, title, body, *tags"
+                columns: "++id, *tags"
             },
             {
-                version: 2,
-                columns: "++id, title, body, *tags, created, deleted, published, [deleted+published]"
+                version: 3,
+                columns: "++id,*tags, title, deleted, published, [deleted+published]"
             },
         ];
     }
