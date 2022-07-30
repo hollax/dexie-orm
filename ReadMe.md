@@ -64,9 +64,9 @@ Somewhere in the app:
 
 ```javascript
     let post = await Post.find(1)
-    console.log('Post id 1 title ', post.title);
-    let post2 = await Post.f(1)
-    console.log('Post id 1 title ', post.title);
+    console.log('Post 1', post);
+    let post2 = await Post.find(2)
+    console.log('Post 2', post2);
 
 ```
 
