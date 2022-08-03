@@ -1,4 +1,4 @@
-![Test](https://github.com/github/docs/actions/workflows/test.yml/badge.svg)
+![Test](https://github.com/hollax/ruby-math-game/actions/workflows/ruby.yml/badge.svg)
 
 ## Introduction
 
