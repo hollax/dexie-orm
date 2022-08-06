@@ -1,4 +1,5 @@
 const Dexie = require('dexie');
+const QueryBuilder = require('./QueryBuilder');
 
 let lastInserts = {};
 
@@ -10,13 +11,13 @@ class DexieModel {
      * @param {Object} data Updates class properties
      */
     constructor(data = {}) {
-       this.populate(data);
+        this.populate(data);
     }
 
-    populate(data){
+    populate(data) {
         // set properties
         for (let i in data) {
-            if(typeof data[i] !== 'function'){
+            if (typeof data[i] !== 'function') {
                 this[i] = data[i];
             }
         }
@@ -91,15 +92,15 @@ class DexieModel {
         return table.get(id);
     }
 
-     /**
-     * Retrive single record 
-     * @param {Number} id Record id
-     * @returns {Promise} reolves to model instance
-     */
-      static first(where = {}) {
-        var table = this.whereClause || this.getTableConnection();
-        
-        return table.where(where).first();
+    /**
+    * Retrive single record 
+    * @param {Number} id Record id
+    * @returns {Promise} reolves to model instance
+    */
+    static first(where = {}) {
+        let builder = this.getQueryBuilder();
+
+        return builder.where(where).first();
     }
 
 
@@ -138,50 +139,35 @@ class DexieModel {
         return table.count();
     }
 
-        /**
-     * Get multiple record
-     * @param {Dexie[table]} where
-     * @param {Object} where
-     * @param {Number} limit
-     * @param {Number} page
-     * @param {String} order name of column to use in dorting
-     * @param {Boolean} desc Whether to sort indescending order
-     */
-         static fetch(table, limit, page, order, desc) {
-            let query = table;
-    
-            if (page) {
-                var offset = (page - 1) * limit;
-                query = query.offset(offset)
-            }
-    
-            if (limit) {
-                query = query.limit(limit)
-            }
-    
-    
-            if (order) {
-    
-                if (desc) {
-                    query = query.desc();
-                }
-                else {
-                    // query = query.reverse();
-                }
-    
-             
-                return query.sortBy(order);
-            }
-    
-            //query = query.distinct();
-            if(this.whereClause){
-                console.log(this.whereClause)
-            }
-    
-            return query.toArray();
+    /**
+ * Get multiple record
+ * @param {Dexie[table]} where
+ * @param {Object} where
+ * @param {Number} limit
+ * @param {Number} page
+ * @param {String} order name of column to use in dorting
+ * @param {Boolean} desc Whether to sort indescending order
+ */
+    static fetch(builder, limit, page, order, desc) {
+
+        if (page) {
+            var offset = (page - 1) * limit;
+            builder.offset(offset);
         }
 
-        
+        if (limit) {
+            builder.limit(limit)
+        }
+
+        if (order) {
+            builder.sortBy(order, desc);
+        }
+
+
+        return builder.all();
+    }
+
+
     /**
      * Get multiple record
      * @param {Object} where
@@ -189,75 +175,41 @@ class DexieModel {
      * @param {Number} page
      * @param {String} order name of column to use in dorting
      * @param {Boolean} desc Whether to sort indescending order
+     * @returns {Promise<ThisType<this>[]>}
      */
     static all(where, limit, page, order, desc) {
 
-        var table = this.whereClause || this.getTableConnection();
+        let builder = where ? this.where(where) : this.getQueryBuilder();
 
-        if (where) {
-            table = table.where(where);
-        }
-
-        return this.fetch(table, limit, page, order, desc);
+        return this.fetch(builder, limit, page, order, desc);
 
     }
 
-    static filter(callback){
-        let whereClause = this.getTableConnection().filter(callback);
-       //save it to allow building custom where with all() metho
-       //  this.whereClause = whereClause;
-       return whereClause;
-   }
-
-    static where(index){
-         let whereClause = this.getTableConnection().where(index);
-        //save it to allow building custom where with all() metho
-        //  this.whereClause = whereClause;
-        return whereClause;
-    }
-    /**
-    * Get multiple record where keyPath value in specified values
-    * @param {String|Array} column
-    * @param {mixed} values
-    * @param {Function} filter
-    * @param {Number} limit
-    * @param {Number} page
-    * @param {String} order name of column to use in dorting
-    * @param {Boolean} desc Whether to sort indescending order
-    */
-    static in(column, values, filter, limit, page, order, desc) {
-
-        var table = this.whereClause || this.getTableConnection();
-
-
-        table = table.where(column).anyOf(values);
-
-        if (filter) {
-            table = table.and(filter);
-        }
-
-        return this.fetch(table, limit, page, order, desc);
-
+    static filter(callback) {
+        return this.getQueryBuilder().filter(callback);
     }
 
-    /**
-     * Get multiple record where keyPath value not in specified values
-
-     * @param {String} column
-     * @param {Array} values
-     * @param {Number} limit
-     * @param {Number} page
-     * @param {String} order keyPath
-     * @param {Boolean} desc
-     */
-    static notIn(column, values, limit, page, order, desc) {
-        var table = this.getTableConnection();
-
-        table = table.where(column).noneOf(values);
-
-        return this.fetch(table, limit, page, order, desc);
+    static where(index) {
+        let builder = new QueryBuilder(this.getTableConnection());
+        return builder.where(index);
     }
 
+
+
+    static whereIn(key, values) {
+
+        let builder = this.getQueryBuilder();
+
+        return builder.where(key).anyOf(values).all();
+    }
+
+    
+    static whereNotIn(key, values) {
+
+        let builder = this.getQueryBuilder();
+
+        return builder.where(key).noneOf(values).all();
+    }
 
     /**
      * Insert mutiple record
@@ -289,7 +241,7 @@ class DexieModel {
      * @param {any} keys
      */
     static deleteAll(keys) {
-        var table = this.whereClause || this.getTableConnection();
+        var table = this.getTableConnection();
         return table.bulkDelete(keys);
     }
 
@@ -332,6 +284,22 @@ class DexieModel {
      * @returns {Dexie.table}
      */
     static getTableConnection() {
+        return this.connection;
+    }
+
+    /**
+     * 
+     * @returns {Dexie.table}
+     */
+    static getQueryBuilder() {
+        return new QueryBuilder(this.getTableConnection());
+    }
+
+    /**
+     * 
+     * @returns {Dexie.table}
+     */
+    static query() {
         return this.connection;
     }
 
