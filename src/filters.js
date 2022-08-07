@@ -53,11 +53,13 @@ const filters = {
         }    
     },
     between:{
-        index: function(builder, [lowerBound, upperBound]){
-            return builder.between(lowerBound, upperBound);
+        index: function(builder, [lowerBound, upperBound, includeLower, includeUpper]){
+            return builder.between(lowerBound, upperBound, includeLower, includeUpper);
         },
-        filter: function(value, [lowerBound, upperBound]){
-            return value > lowerBound && value < upperBound;
+        filter: function(value, [lowerBound, upperBound, includeLower, includeUpper]){
+            let from = includeLower? lowerBound - 1 : lowerBound;
+            let to = includeUpper? upperBound + 1 : upperBound;
+            return value > from && value < to;
         }    
     },
     equals:{
@@ -92,12 +94,12 @@ const filters = {
             return !check.find(item => String(item).toLowerCase() == String(value).toLowerCase());
         }    
     },
-    notEquals:{
+    notEqual:{
         index: function(builder, value){
-            return builder.notEquals(value);
+            return builder.notEqual(value);
         },
         filter: function(value, check){
-            return value !== check
+            return value !== check;
         }    
     },
     startsWith:{

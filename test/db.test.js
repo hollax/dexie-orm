@@ -55,6 +55,7 @@ describe('getSchema', () => {
 
 
 describe('Queries', () => {
+
     beforeEach(async () => {
         await db.table('posts').clear();
         await db.table('employees').clear();
@@ -69,7 +70,7 @@ describe('Queries', () => {
     });
 
     describe('save', () => {
-      
+
 
         test('save new item in store', async function () {
             await db.table('posts').clear();
@@ -97,9 +98,9 @@ describe('Queries', () => {
             expect(post2.title).toEqual('Hello World');
             await post2.save();
             expect(await db.posts.count()).toEqual(2, 'Save another item');
-        
+
         });
-    
+
     });
 
     describe('find', () => {
@@ -159,32 +160,8 @@ describe('Queries', () => {
         });
     });
 
-    describe('custom where conditions', function(){
-        test('bewteen', async function () {
-            let posts = await PostModel
-                .where('id')
-                .between(1, 4)
-                .all();
-            expect(posts).toHaveLength(3);
-        });
 
-
-        test('below', async function () {
-            let posts = await PostModel
-                .where('id')
-                .below(4)
-                .all();
-            expect(posts).toHaveLength(3);
-        });
-        
-        test('equals', async function () {
-            let posts = await PostModel
-                .where('id')
-                .equals(1)
-                .all();
-            expect(posts).toHaveLength(1);
-            expect(posts[0].id).toEqual(1);
-        });
+    describe('above()', () => {
 
         test('above', async function () {
             let posts = await EmployeeModel
@@ -195,7 +172,9 @@ describe('Queries', () => {
             expect(posts[0].id).toEqual(16);
             expect(posts[1].id).toEqual(17);
         });
+    });
 
+    describe('aboveOrEqual()', () => {
         test('aboveOrEqual', async function () {
             let posts = await EmployeeModel
                 .where('salary')
@@ -205,38 +184,354 @@ describe('Queries', () => {
             expect(posts[0].id).toEqual(11);
             expect(posts[1].id).toEqual(12);
         });
+    });
+    describe('anyOf()', () => {
 
-        test('anyOf', async function () {
+        test('check numbers', async function () {
             let posts = await EmployeeModel
                 .where('id')
-                .anyOf([ 7, 10, 11])
+                .anyOf([7, 10, 11])
                 .all();
             expect(posts).toHaveLength(3);
             expect(posts[0].id).toEqual(7);
             expect(posts[1].id).toEqual(10);
             expect(posts[2].id).toEqual(11);
         });
+
         test('anyOf with with below', async function () {
             let posts = await EmployeeModel
                 .where('id')
-                .anyOf([ 7, 10, 11])
+                .anyOf([7, 10, 11])
                 .and('salary')
                 .below(100000)
                 .fetch();
-                
+
             expect(posts).toHaveLength(2);
             expect(posts[0].id).toEqual(7);
             expect(posts[1].id).toEqual(10);
         });
 
+        test('case sensisitve', async function () {
+            let posts = await EmployeeModel
+                .where('name')
+                .anyOf(['employee 1', 'employee 10'])
+                .all();
+            expect(posts).toHaveLength(0);
+        });
+    });
+
+    describe('anyOfIgnoreCase()', () => {
+
+        test('anyOfIgnoreCase', async function () {
+            let posts = await EmployeeModel
+                .where('name')
+                .anyOfIgnoreCase(['employee 1', 'employee 10'])
+                .all();
+            expect(posts).toHaveLength(2);
+            expect(posts[0].id).toEqual(1);
+            expect(posts[1].id).toEqual(10);
+        });
+    });
+
+    describe('below()', () => {
+
+        test('below', async function () {
+            let posts = await PostModel
+                .where('id')
+                .below(4)
+                .all();
+            expect(posts).toHaveLength(3);
+        });
+    });
+
+    describe('bewteen()', () => {
+
+        test('include lower and upper bounds', async function () {
+            let posts = await PostModel
+                .where('id')
+                .between(1, 4)
+                .all();
+            expect(posts).toHaveLength(4);
+        });
+        test('exclude lower and upper bounds', async function () {
+            let posts = await PostModel
+                .where('id')
+                .between(1, 4, false, false)
+                .all();
+            expect(posts).toHaveLength(2);
+        });
+        test('exclude lower bound', async function () {
+            let posts = await PostModel
+                .where('id')
+                .between(1, 4, false)
+                .all();
+            expect(posts).toHaveLength(3);
+        });
+
+        test('exclude upper bound', async function () {
+            let posts = await PostModel
+                .where('id')
+                .between(1, 4, false, false)
+                .all();
+            expect(posts).toHaveLength(2);
+        });
+
+        test('as second filter', async function () {
+            let posts = await PostModel
+                .where('status')
+                .equals('publish')
+                .and('id')
+                .between(1, 4)
+                .all();
+            expect(posts).toHaveLength(4);
+        });
+        test('as second filter include lower and upper bounds', async function () {
+            let posts = await PostModel
+                .where('status')
+                .equals('publish')
+                .and('id')
+                .between(1, 4)
+                .all();
+            expect(posts).toHaveLength(4);
+        });
+        test('as second filter exlude lower ', async function () {
+            let posts = await PostModel
+                .where('status')
+                .equals('publish')
+                .and('id')
+                .between(1, 4, false)
+                .all();
+            expect(posts).toHaveLength(3);
+        });
+
+    });
+
+    describe('equals()', () => {
+
+        test('check numbers', async function () {
+            let posts = await EmployeeModel
+                .where('id')
+                .equals(1)
+                .all();
+            expect(posts).toHaveLength(1);
+            expect(posts[0].id).toEqual(1);
+        });
+
+        test('case insensitve match', async function () {
+            let posts = await EmployeeModel
+                .where('name')
+                .equals('Employee 1')
+                .all();
+            expect(posts).toHaveLength(1);
+            expect(posts[0].id).toEqual(1);
+        });
+
+        test('case insensitve no match', async function () {
+            let posts = await EmployeeModel
+                .where('name')
+                .equals('employee 1')
+                .all();
+            expect(posts).toHaveLength(0);
+        });
+    });
+
+    describe('equalsIgnoreCase()', () => {
+        test('case insensitve match', async function () {
+            let posts = await EmployeeModel
+                .where('name')
+                .equalsIgnoreCase('Employee 1')
+                .all();
+            expect(posts).toHaveLength(1);
+            expect(posts[0].id).toEqual(1);
+        });
+        test('case insensitve no match', async function () {
+            let posts = await EmployeeModel
+                .where('name')
+                .equalsIgnoreCase('employee 1')
+                .all();
+            expect(posts).toHaveLength(1);
+            expect(posts[0].id).toEqual(1);
+        });
+    });
+
+    describe('noneOf', () => {
+        test('case insensitve match', async function () {
+            let posts = await EmployeeModel
+                .where('name')
+                .noneOf(['Employee 1', 'Employee 2'])
+                .all();
+            let ids = posts.map(item => item.id);
+            expect(posts).toHaveLength(fixtures.employees.length - 2);
+            expect(ids).toEqual(
+                expect.not.arrayContaining([1, 2])
+            );
+        });
+        test('case sensitve no match', async function () {
+            let posts = await EmployeeModel
+                .where('name')
+                .noneOf(['employee 1', 'employee 2'])
+                .all();
+            expect(posts).toHaveLength(fixtures.employees.length);
+        });
+    });
+
+    describe('notEqual', () => {
+        test('check numbers', async function () {
+            let posts = await EmployeeModel
+                .where('id')
+                .notEqual(1)
+                .all();
+            expect(posts).toHaveLength(fixtures.employees.length - 1);
+        });
+        test('case sensitve match', async function () {
+            let posts = await EmployeeModel
+                .where('name')
+                .notEqual('Employee 1')
+                .all();
+            let ids = posts.map(item => item.id);
+            expect(ids).toEqual(
+                expect.not.arrayContaining([1])
+            );
+            expect(posts).toHaveLength(fixtures.employees.length - 1);
+        });
+        test('case sensitve no match', async function () {
+            let posts = await EmployeeModel
+                .where('name')
+                .notEqual('employee 1')
+                .all();
+            expect(posts).toHaveLength(fixtures.employees.length);
+        });
+    });
+
+    describe('startsWith', () => {
+        test('case sensitve match', async function () {
+            let posts = await EmployeeModel
+                .where('name')
+                .startsWith('Emplo')
+                .all();
+            expect(posts).toHaveLength(fixtures.employees.length);
+        });
+
+    });
+
+    describe('startsWithAnyOf', () => {
+        test('case sensitve match', async function () {
+            await EmployeeModel.insertAll([
+                {
+                    name: 'John Doe'
+                },
+                {
+                    name: 'Micheal James'
+                }
+            ]);
+            let posts = await EmployeeModel
+                .where('name')
+                .startsWithAnyOf(['Emplo', 'John'])
+                .all();
+            expect(posts).toHaveLength(fixtures.employees.length + 1);
+        });
+        test('case sensitve no match', async function () {
+            await EmployeeModel.insertAll([
+                {
+                    name: 'John Doe'
+                },
+                {
+                    name: 'Micheal James'
+                }
+            ]);
+            let posts = await EmployeeModel
+                .where('name')
+                .startsWithAnyOf(['emplo', 'john'])
+                .all();
+            expect(posts).toHaveLength(0);
+        });
+    });
+    describe('startsWithAnyOfIgnoreCase', () => {
+        test('case sensitve match', async function () {
+            await EmployeeModel.insertAll([
+                {
+                    name: 'John Doe'
+                },
+                {
+                    name: 'Micheal James'
+                }
+            ]);
+            let posts = await EmployeeModel
+                .where('name')
+                .startsWithAnyOfIgnoreCase(['emplo', 'john'])
+                .all();
+            expect(posts).toHaveLength(fixtures.employees.length + 1);
+        });
+
+        test('as second filter', async function () {
+            await EmployeeModel.insertAll([
+                {
+                    name: 'John Doe',
+                    active: 1,
+                },
+                {
+                    name: 'Micheal James',
+                    active: 0,
+                }
+            ]);
+            let posts = await EmployeeModel
+                .where('active')
+                .equals(1)
+                .and('name')
+                .startsWithAnyOfIgnoreCase(
+                    ['emplo', 'john', 'mich']
+                )
+                .all();
+            expect(posts).toHaveLength(fixtures.employees.length + 1);
+        });
+    });
+    describe('startsWithIgnoreCase', () => {
+        test('case sensitve match', async function () {
+            await EmployeeModel.insertAll([
+                {
+                    name: 'John Doe'
+                },
+                {
+                    name: 'Micheal James'
+                }
+            ]);
+            let posts = await EmployeeModel
+                .where('name')
+                .startsWithIgnoreCase('emp')
+                .all();
+            expect(posts).toHaveLength(fixtures.employees.length);
+        });
+
+        test('as second filter', async function () {
+            await EmployeeModel.insertAll([
+                {
+                    name: 'John Doe',
+                    active: 1,
+                },
+                {
+                    name: 'James Bayn',
+                    active: 1,
+                }
+            ]);
+            let posts = await EmployeeModel
+                .where('active')
+                .equals(1)
+                .and('name')
+                .startsWithIgnoreCase('j')
+                .all();
+            expect(posts).toHaveLength(2);
+        });
+    });
+
+    describe('custom where conditions', function () {
 
         test('multiple where conditions', async function () {
             let posts = await EmployeeModel
                 .where('salary')
                 .between(40000, 100001)
-                .where('years_of_experience')
+                .and('years_of_experience')
                 .equals(5)
-                .all();
+                .fetch();
             expect(posts).toHaveLength(5);
         });
     });
@@ -262,7 +557,7 @@ describe('Queries', () => {
 
 
     describe('insertAll', () => {
-        
+
         test('insert multiple', async () => {
 
             await db.table('employees').clear();
@@ -298,7 +593,7 @@ describe('Queries', () => {
         });
         test('return records where column values in filter', async () => {
             let items = await EmployeeModel
-            .whereIn('years_of_experience', [2, 10]);
+                .whereIn('years_of_experience', [2, 10]);
             expect(items).toHaveLength(2);
         });
     });

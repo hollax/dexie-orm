@@ -32,23 +32,23 @@ class QueryBuilder {
         this._sortDesc = false;
     }
 
-    offset(offset){
+    offset(offset) {
         this._offset = offset;
 
         return this;
     }
 
-    limit(limit){
+    limit(limit) {
         this._limit = limit;
         return this;
     }
 
-    sortBy(key, desc = false){
+    sortBy(key, desc = false) {
         this._sortBy = key;
         this._sortDesc = desc;
         return this;
     }
-    reverse(){
+    reverse() {
         this._sortDesc = true;
         return this;
     }
@@ -56,12 +56,12 @@ class QueryBuilder {
     where(keyPath) {
         if (this._index === 0) {
             this._whereBulder = this._tableStore.where(keyPath);
-        } 
+        }
         this._currentKeyPath = keyPath;
         return this;
     }
 
-    and(keyPath){
+    and(keyPath) {
         if (this._index === 0) {
             throw new Error('Can not use .and() with first where condition')
         }
@@ -72,36 +72,67 @@ class QueryBuilder {
         return this._processFilter('above', value);
     }
 
-    aboveOrEqual(value){
+    aboveOrEqual(value) {
         return this._processFilter('aboveOrEqual', value);
+    }
+
+
+    anyOf(values) {
+        return this._processFilter('anyOf', values);
+    }
+
+    anyOfIgnoreCase(values) {
+        return this._processFilter('anyOfIgnoreCase', values);
+    }
+
+
+    below(upperBound) {
+        return this._processFilter('below', upperBound);
+    }
+
+    between(lowerBound, upperBound, includeLower = true, includeUpper = true) {
+        return this._processFilter('between', [lowerBound, upperBound, includeLower, includeUpper]);
     }
 
     equals(value) {
         return this._processFilter('equals', value);
     }
+    
+    equalsIgnoreCase(value) {
+        return this._processFilter('equalsIgnoreCase', value);
+    }
 
-    below(upperBound) {
-        return this._processFilter('below', upperBound);   
-     }
-
-    between(lowerBound, upperBound) {
-        return this._processFilter('between', [lowerBound, upperBound]);   
-     }
-
-    in(values){
+    in(values) {
         return this._processFilter('anyOf', values);
     }
 
-    anyOf(values){
-        return this._processFilter('anyOf', values);
-    }
-
-    noneOf(){
+    noneOf(values) {
         return this._processFilter('noneOf', values);
     }
 
-    filter(callback){
-        if(typeof callback === 'function'){
+    notEqual(value) {
+        return this._processFilter('notEqual', value);
+    }
+
+    
+    startsWith(value) {
+        return this._processFilter('startsWith', value);
+    }
+
+    startsWithAnyOf(values) {
+        return this._processFilter('startsWithAnyOf', values);
+    }
+
+    startsWithAnyOfIgnoreCase(values) {
+        return this._processFilter('startsWithAnyOfIgnoreCase', values);
+    }
+
+    startsWithIgnoreCase(value) {
+        return this._processFilter('startsWithIgnoreCase', value);
+    }
+
+    filter(callback) {
+        if (typeof callback === 'function') {
             this._filters.push(callback);
         }
         return this;
@@ -120,7 +151,7 @@ class QueryBuilder {
         }
 
         if (this._index === 0) {
-            this._collection = makeIndex(this._whereBulder, config.index, value );
+            this._collection = makeIndex(this._whereBulder, config.index, value);
         } else {
             this._filters.push(makeFilter(this._currentKeyPath, config.filter, value));
         }
@@ -159,8 +190,8 @@ class QueryBuilder {
      */
     build() {
         let collection;
-         //if filter was used
-         if (this._collection) {
+        //if filter was used
+        if (this._collection) {
             collection = this._collection();
             if (this._filters.length) {
                 //call all callback fns on object
@@ -170,12 +201,12 @@ class QueryBuilder {
                 });
             }
 
-        }else if(this._whereBulder){
+        } else if (this._whereBulder) {
             collection = this._whereBulder;
-        }else {
+        } else {
             collection = this._tableStore;
         }
-        
+
         if (this._offset) {
             collection = collection.offset(this._offset);
         }
@@ -188,7 +219,7 @@ class QueryBuilder {
 
             if (this._sortDesc) {
                 collection = collection.reverse();
-            } 
+            }
             collection = collection.sortBy(this._sortBy);
         }
 

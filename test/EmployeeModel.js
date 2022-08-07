@@ -7,7 +7,7 @@ class EmployeeModel extends Model{
         return [
             {
                 version: 1,
-                columns: "++id, name, salary, years_of_experience"
+                columns: "++id, active, name, salary, years_of_experience"
             },
         ];
     }
