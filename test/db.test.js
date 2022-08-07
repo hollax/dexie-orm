@@ -248,6 +248,17 @@ describe('Queries', () => {
         });
     });
 
+    describe('belowOrEqual()', () => {
+
+        test('return posts where id below or eq 5', async function () {
+            let posts = await PostModel
+                .where('id')
+                .belowOrEqual(4)
+                .fetch();
+            expect(posts).toHaveLength(4);
+        });
+    });
+
     describe('bewteen()', () => {
 
         test('include lower and upper bounds', async function () {
@@ -606,6 +617,25 @@ describe('Queries', () => {
         test('delete multiple', async () => {
             await EmployeeModel.deleteAll([1, 2]);
             expect(await db.employees.count()).toEqual(fixtures.employees.length - 2);
+        });
+    });
+
+    describe('count', () => {
+        test('return total', async () => {
+            expect(await EmployeeModel.count()).toEqual(fixtures.employees.length);
+        });
+        test('filter where param', async () => {
+            expect(await EmployeeModel.count({
+                active: 0
+            })).toEqual(2);
+        });
+        test('return total with filter', async () => {
+            expect(
+                await EmployeeModel
+                .where('active')
+                .equals(1)
+                .count()
+            ).toEqual(fixtures.employees.length - 2);
         });
     });
 

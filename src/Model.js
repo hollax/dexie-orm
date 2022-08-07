@@ -111,12 +111,12 @@ class DexieModel {
      */
     static count(where) {
 
-        var table = this.whereClause || this.getTableConnection();
+        var builder = this.getQueryBuilder();
 
         if (where) {
-            table = table.where(where);
+            builder.where(where);
         }
-        return table.count();
+        return builder.count();
     }
 
     /**
@@ -190,8 +190,7 @@ class DexieModel {
     }
 
     static where(index) {
-        let builder = new QueryBuilder(this.getTableConnection());
-        return builder.where(index);
+        return this.getQueryBuilder().where(index);
     }
 
 
@@ -289,7 +288,7 @@ class DexieModel {
 
     /**
      * 
-     * @returns {Dexie.table}
+     * @returns {QueryBuilder}
      */
     static getQueryBuilder() {
         return new QueryBuilder(this.getTableConnection());
@@ -300,7 +299,7 @@ class DexieModel {
      * @returns {Dexie.table}
      */
     static query() {
-        return this.connection;
+        return this.getQueryBuilder();
     }
 
 

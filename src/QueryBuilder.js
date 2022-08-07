@@ -89,6 +89,10 @@ class QueryBuilder {
     below(upperBound) {
         return this._processFilter('below', upperBound);
     }
+    
+    belowOrEqual(upperBound) {
+        return this._processFilter('belowOrEqual', upperBound);
+    }
 
     between(lowerBound, upperBound, includeLower = true, includeUpper = true) {
         return this._processFilter('between', [lowerBound, upperBound, includeLower, includeUpper]);
@@ -161,13 +165,11 @@ class QueryBuilder {
     }
 
     first() {
-        let collection = this.build();
-        return collection.first();
+        return this.build().first();
     }
 
     count() {
-        let collection = this.build();
-        return collection.count();
+        return this.build().count();
     }
 
     fetch() {
@@ -175,8 +177,7 @@ class QueryBuilder {
     }
 
     all() {
-        let collection = this.build();
-        return collection.toArray();
+        return this.build().toArray();
     }
 
     delete() {
