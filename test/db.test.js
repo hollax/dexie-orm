@@ -7,11 +7,15 @@ const PostModel = require('./PostModel').default;
 const { makeEmployees, makePosts } = require('./fixtures');
 
 const fixtures = {
-    posts: makePosts(10),
+    posts: makePosts(10, 1),
     employees: [].concat(
-        makeEmployees(10, 50000, 3),
-        makeEmployees(5, 100000, 5, 11),
-        makeEmployees(2, 150000, 10, 16),
+        makeEmployees(10, 50000, 3, 1),
+        makeEmployees(5, 100000, 5, 11, 1),
+        /**
+         * 
+         * 2 employees more experienced are inactive 
+         */
+        makeEmployees(2, 150000, 10, 16, 0),
     )
 };
 var db = new Dexie("MyDatabase");
@@ -482,7 +486,7 @@ describe('Queries', () => {
                     ['emplo', 'john', 'mich']
                 )
                 .all();
-            expect(posts).toHaveLength(fixtures.employees.length + 1);
+            expect(posts).toHaveLength(fixtures.employees.length - 2 + 1);
         });
     });
     describe('startsWithIgnoreCase', () => {
