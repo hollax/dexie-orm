@@ -205,6 +205,7 @@ class QueryBuilder {
         } else {
             collection = this._tableStore;
         }
+        
         if (this._filters.length) {
             //call all callback fns on object
             collection = collection.filter((obj) => {
@@ -212,7 +213,7 @@ class QueryBuilder {
                 return noMath === -1;
             });
         }
-        
+
         if (this._offset) {
             collection = collection.offset(this._offset);
         }
