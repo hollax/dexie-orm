@@ -89,7 +89,7 @@ class QueryBuilder {
     below(upperBound) {
         return this._processFilter('below', upperBound);
     }
-    
+
     belowOrEqual(upperBound) {
         return this._processFilter('belowOrEqual', upperBound);
     }
@@ -101,7 +101,7 @@ class QueryBuilder {
     equals(value) {
         return this._processFilter('equals', value);
     }
-    
+
     equalsIgnoreCase(value) {
         return this._processFilter('equalsIgnoreCase', value);
     }
@@ -118,7 +118,7 @@ class QueryBuilder {
         return this._processFilter('notEqual', value);
     }
 
-    
+
     startsWith(value) {
         return this._processFilter('startsWith', value);
     }
@@ -142,6 +142,98 @@ class QueryBuilder {
         return this;
     }
 
+
+    count() {
+        let result = this.build();
+        if (!result.sorted) {
+            return result.collection.count();
+        }
+        return result.collection.then(arr => arr.length);
+    }
+
+    first() {
+        let result = this.build();
+        if (!result.sorted) {
+            return result.collection.first();
+        }
+        return result.collection.then(arr => arr[0]);
+    }
+
+
+
+
+    last() {
+        let result = this.build();
+        if (!result.sorted) {
+            return result.collection.last();
+        }
+        return result.collection.then(arr => arry[arr.length - 1]);
+    }
+
+    fetch() {
+        return this.all();
+    }
+
+    all() {
+        let result = this.build();
+        if (!result.sorted) {
+            return result.collection.toArray();
+        }
+        return result.collection.then(arr => arr);
+    }
+
+    delete() {
+        return this.build().delete();
+    }
+
+    /**
+     * 
+     * @returns Collection
+     */
+    build() {
+        let collection;
+        let result = {
+            sorted: false
+        }
+        //if filter was used
+        if (this._collection) {
+            collection = this._collection();
+            
+
+        } else if (this._whereBulder) {
+            collection = this._whereBulder;
+        } else {
+            collection = this._tableStore;
+        }
+        if (this._filters.length) {
+            //call all callback fns on object
+            collection = collection.filter((obj) => {
+                let noMath = this._filters.findIndex(fn => !fn(obj));
+                return noMath === -1;
+            });
+        }
+        
+        if (this._offset) {
+            collection = collection.offset(this._offset);
+        }
+
+        if (this._limit) {
+            collection = collection.limit(this._limit)
+        }
+        if (this._sortBy) {
+
+            if (this._sortDesc) {
+                collection = collection.reverse();
+            }
+            collection = collection.sortBy(this._sortBy);
+            result.sorted = true;
+        }
+        result.collection = collection;
+
+        return result;
+    }
+
+
     /**
      * 
      * @param {String} filterName 
@@ -162,69 +254,6 @@ class QueryBuilder {
         this._index++;
 
         return this;
-    }
-
-    first() {
-        return this.build().first();
-    }
-
-    count() {
-        return this.build().count();
-    }
-
-    fetch() {
-        return this.all();
-    }
-
-    all() {
-        return this.build().toArray();
-    }
-
-    delete() {
-        let collection = this.build();
-        return collection.delete();
-    }
-
-    /**
-     * 
-     * @returns Collection
-     */
-    build() {
-        let collection;
-        //if filter was used
-        if (this._collection) {
-            collection = this._collection();
-            if (this._filters.length) {
-                //call all callback fns on object
-                collection = collection.filter((obj) => {
-                    let noMath = this._filters.findIndex(fn => !fn(obj));
-                    return noMath === -1;
-                });
-            }
-
-        } else if (this._whereBulder) {
-            collection = this._whereBulder;
-        } else {
-            collection = this._tableStore;
-        }
-
-        if (this._offset) {
-            collection = collection.offset(this._offset);
-        }
-
-        if (this._limit) {
-            collection = collection.limit(this._limit)
-        }
-
-        if (this._sortBy) {
-
-            if (this._sortDesc) {
-                collection = collection.reverse();
-            }
-            collection = collection.sortBy(this._sortBy);
-        }
-
-        return collection;
     }
 
 

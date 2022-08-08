@@ -97,10 +97,24 @@ class DexieModel {
     * @param {Number} id Record id
     * @returns {Promise} reolves to model instance
     */
-    static first(where = {}) {
+    static first(where) {
         let builder = this.getQueryBuilder();
 
-        return builder.where(where).first();
+        if(where){
+            builder.where(where);
+        }
+
+        return builder.first();
+    }
+
+    static last(where){
+        let builder = this.getQueryBuilder();
+
+        if(where){
+            builder.where(where);
+        }
+
+        return builder.last();
     }
 
 

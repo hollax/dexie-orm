@@ -140,6 +140,17 @@ describe('Queries', () => {
 
     });
 
+    describe('last', () => {
+
+        test('return last record', async function () {
+            let post = await PostModel.last({
+                title: 'Post 10'
+            });
+            expect(post).toBeInstanceOf(PostModel);
+            expect(post.title).toEqual('Post 10');
+        });
+    });
+
     describe('all', () => {
 
         test('return all records', async function () {
@@ -162,6 +173,12 @@ describe('Queries', () => {
             expect(posts[0].title).toEqual('Post 6');
 
         });
+
+        test('sortBy', async()=>{
+            let posts = await PostModel.query()
+            .sortBy('id', true).fetch();
+            expect(posts[0].id).toEqual(10);
+        })
     });
 
 
@@ -369,6 +386,16 @@ describe('Queries', () => {
         });
     });
 
+    describe('filter', () => {
+        test('filter records with callback', async function () {
+            let posts = await EmployeeModel
+                .filter((row)=> ['Employee 1', 'Employee 2'].includes(row.name) )
+                .all();
+            let ids = posts.map(item => item.id);
+            expect(posts).toHaveLength(2);
+            expect(ids).toEqual([1, 2]);
+        });
+    })
     describe('noneOf', () => {
         test('case insensitve match', async function () {
             let posts = await EmployeeModel
@@ -549,6 +576,7 @@ describe('Queries', () => {
                 .fetch();
             expect(posts).toHaveLength(5);
         });
+        
     });
     describe('del', () => {
         test('delete record', async () => {
