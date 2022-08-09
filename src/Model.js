@@ -30,12 +30,33 @@ class DexieModel {
 
     }
 
+
+    static create(data) {
+        var table = this.getTableConnection();
+        let item = new this();
+        item.populate(data);
+        item._beforeSave();
+        if (item.hasOwnProperty('created')) {
+            item.created = new Date();
+        }
+        let row = this._getSaveData(item, data);
+        return table.put(row)
+        .then((id) => {
+            item.id = id;
+            this.setLastInsert(id);
+            item._afterSave();
+            return item;
+        });
+
+    }
+
     static _getSaveData(obj, data) {
         let row = {};
         let cols = Object.keys(obj);
         cols.map(col => row[col] = obj[col]);
         return row;
     }
+
     /**
      * Saves the class property values
      @returns {Promise} put promise
@@ -100,17 +121,17 @@ class DexieModel {
     static first(where) {
         let builder = this.getQueryBuilder();
 
-        if(where){
+        if (where) {
             builder.where(where);
         }
 
         return builder.first();
     }
 
-    static last(where){
+    static last(where) {
         let builder = this.getQueryBuilder();
 
-        if(where){
+        if (where) {
             builder.where(where);
         }
 
@@ -216,7 +237,7 @@ class DexieModel {
         return builder.where(key).anyOf(values).all();
     }
 
-    
+
     static whereNotIn(key, values) {
 
         let builder = this.getQueryBuilder();
@@ -231,7 +252,7 @@ class DexieModel {
     static insertAll(data) {
 
         var table = this.getTableConnection();
-        let p = table.bulkAdd(data);
+        let p = table.bulkPut(data);
 
         p.then((lastKey) => {
             this.setLastInsert(lastKey);

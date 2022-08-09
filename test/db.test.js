@@ -1,6 +1,7 @@
 require("fake-indexeddb/auto");
 
 const Dexie = require('dexie');
+const { query } = require("../src/Model");
 const setup = require("../src/setup");
 const EmployeeModel = require('./EmployeeModel').default;
 const PostModel = require('./PostModel').default;
@@ -107,6 +108,36 @@ describe('Queries', () => {
 
     });
 
+    describe('create', () => {
+
+        test('create new record', async function () {
+            await db.table('posts').clear();
+
+            let post = await PostModel.create({
+                title: 'Foo',
+            });
+            expect(post).toBeDefined();
+            expect(post.title).toEqual('Foo');
+            expect(await db.posts.count()).toEqual(1);
+                
+        });
+        test('update existing', async function () {
+            await db.table('posts').clear();
+
+            let post = await PostModel.create({
+                title: 'Foo',
+            });
+            expect(post).toBeDefined();
+            expect(post.id).toBeDefined();
+            expect(post.title).toEqual('Foo');
+            await PostModel.create({
+                id: post.id,
+                title: 'Foo',
+            });
+            expect(await db.posts.count()).toEqual(1);
+        });
+
+    });
     describe('find', () => {
 
         test('return record', async function () {
@@ -396,6 +427,17 @@ describe('Queries', () => {
             expect(ids).toEqual([1, 2]);
         });
     })
+    describe('like', () => {
+        test('filter records', async function () {
+            let posts = await EmployeeModel
+                .where('name')
+                .like('ployee 1')
+                .all();
+            let ids = posts.map(item => item.id);
+            expect(posts).toHaveLength(9);
+            expect(ids).toEqual([1, 10, 11, 12,13,14,15,16, 17]);
+        });
+    })
     describe('noneOf', () => {
         test('case insensitve match', async function () {
             let posts = await EmployeeModel
@@ -606,6 +648,10 @@ describe('Queries', () => {
             await db.table('employees').clear();
             await EmployeeModel.insertAll(fixtures.employees);
             expect(await db.employees.count()).toEqual(fixtures.employees.length);
+
+            await EmployeeModel.insertAll(fixtures.employees);
+            expect(await db.employees.count()).toEqual(fixtures.employees.length, 'update existing');
+
         });
     });
 

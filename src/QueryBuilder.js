@@ -106,6 +106,14 @@ class QueryBuilder {
         return this._processFilter('equalsIgnoreCase', value);
     }
 
+    like(value) {
+       var q = value && value.toUpperCase();
+       var key = this._currentKeyPath;
+        return this.filter((item)=>{
+            return item[key] && item[key].toUpperCase().indexOf(q) !== -1;
+        });
+    }
+
     in(values) {
         return this._processFilter('anyOf', values);
     }
@@ -205,8 +213,15 @@ class QueryBuilder {
         } else {
             collection = this._tableStore;
         }
-        
+
         if (this._filters.length) {
+            /**
+             * if where is called for filter, we need to filter on table itself
+             * Hanldes where().like()
+            */
+            if(this._index === 0){
+                collection = this._tableStore;
+            }
             //call all callback fns on object
             collection = collection.filter((obj) => {
                 let noMath = this._filters.findIndex(fn => !fn(obj));
