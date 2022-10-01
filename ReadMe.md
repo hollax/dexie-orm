@@ -1,4 +1,4 @@
-![Test](https://github.com/github/docs/actions/workflows/test.yml/badge.svg)
+![Test](https://github.com/hollax/dexie-orm/actions/workflows/test.yml/badge.svg)
 
 ## Introduction
 
