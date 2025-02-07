@@ -5,7 +5,7 @@ export type FilterHandler<T> = (Item: T) => boolean;
 export type FilterType = keyof typeof filters;
 export declare class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
     _tableStore: Dexie.Table<T, Key>;
-    _currentKeyPath?: keyof T;
+    _currentKeyPath?: keyof T | string;
     _primaryQueryAdded: boolean;
     _filters: FilterHandler<T>[];
     _index: number;
@@ -20,7 +20,7 @@ export declare class QueryBuilder<T extends Model = Model, Key extends string = 
     limit(limit: number): this;
     sortBy(key: string, desc?: boolean): this;
     reverse(): this;
-    where(keyPath: keyof T): this;
+    where(keyPath: keyof T | string): this;
     and(keyPath: keyof T): this;
     above(value: number): this;
     aboveOrEqual(value: number): this;
@@ -40,11 +40,11 @@ export declare class QueryBuilder<T extends Model = Model, Key extends string = 
     startsWithAnyOfIgnoreCase(values: any[]): this;
     startsWithIgnoreCase(value: any): this;
     filter(callback: FilterHandler<T>): this;
-    count(): Promise<number> | undefined;
-    first(): Promise<any> | undefined;
-    last(): import("../node_modules/dexie/dist/dexie").PromiseExtended<any> | Promise<Model> | undefined;
-    fetch(): Promise<any> | undefined;
-    all(): Promise<any> | undefined;
+    count(): Promise<number>;
+    first(): Promise<any>;
+    last(): import("../node_modules/dexie/dist/dexie").PromiseExtended<any> | Promise<Model>;
+    fetch(): Promise<any>;
+    all(): Promise<any>;
     delete(): any;
     /**
      *
@@ -52,7 +52,7 @@ export declare class QueryBuilder<T extends Model = Model, Key extends string = 
      */
     build(): {
         sorted: false;
-        collection: undefined | Dexie.Collection;
+        collection: Dexie.Collection;
     } | {
         sorted: true;
         collection: Promise<any> | Dexie.Table<T, Key>;

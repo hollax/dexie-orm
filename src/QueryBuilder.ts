@@ -24,7 +24,7 @@ export type FilterType = keyof typeof filters;
 export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
 
     _tableStore: Dexie.Table<T, Key> ;
-    _currentKeyPath?: keyof T;
+    _currentKeyPath?: keyof T | string;
     _primaryQueryAdded = false;
     _filters: FilterHandler<T>[] = [];
     _index = 0;
@@ -60,7 +60,7 @@ export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
         return this;
     }
 
-    where(keyPath: keyof T) {
+    where(keyPath: keyof T | string) {
         if (this._index === 0) {
             this._whereBulder = this._tableStore.where(keyPath as string);
         }
@@ -162,7 +162,7 @@ export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
         let result = this.build();
 
         if (!result.sorted) {
-            return result.collection?.count();
+            return result.collection.count();
         }
         return (result.collection as Promise<Model[]>).then(arr => arr.length);
     }
@@ -170,7 +170,7 @@ export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
     first() {
         let result = this.build();
         if (!result.sorted) {
-            return result.collection?.first();
+            return result.collection.first();
         }
         return (result.collection as Promise<any>).then(arr => arr[0]);
     }
@@ -179,7 +179,7 @@ export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
     last() {
         let result = this.build();
         if (!result.sorted) {
-            return result.collection?.last();
+            return result.collection.last();
         }
         return (result.collection as Promise<Model[]>).then(arr => arr[arr.length - 1]);
     }
@@ -191,7 +191,7 @@ export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
     all() {
         let result = this.build();
         if (!result.sorted) {
-            return result.collection?.toArray();
+            return result.collection.toArray();
         }
         return (result.collection as Promise<any>).then(arr => arr);
     }
@@ -208,10 +208,10 @@ export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
         let collection: Dexie.Collection | Dexie.Table<T, Key> ;
         let result = {
             sorted: false,
-            collection: undefined 
+            collection: undefined as any
         } as {
           sorted: false,
-          collection:  undefined | Dexie.Collection 
+          collection:  Dexie.Collection 
         } | {
             sorted:true,
             collection: Promise<any> | Dexie.Table<T, Key>

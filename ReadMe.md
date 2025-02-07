@@ -17,6 +17,10 @@ const {Model, setup} = require('@hollax/dexie-orm');
 
 class Post extend Model{
 
+    title?: string
+    status?:string
+    body?: string
+    
     static tableName = 'posts';
 
     static getSchema(){

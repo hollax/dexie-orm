@@ -24,7 +24,7 @@ export declare class Model {
     populate(data: Record<string, any>): void;
     _beforeSave(): void;
     _afterSave(): void;
-    static create(data: Record<string, any>): import("../node_modules/dexie/dist/dexie").PromiseExtended<Model>;
+    static create<T extends typeof Model>(this: T, data: Record<string, any>): Promise<InstanceType<T>>;
     static _getSaveData(obj: Record<string, any>, data?: Record<string, any>): Record<string, any>;
     /**
      * Saves the class property values
@@ -36,25 +36,25 @@ export declare class Model {
     @returns {Promise} delete promise
      */
     delete(): any;
-    protected static _where(builder: QueryBuilder, where?: Record<string, any>): void;
+    protected static _where(builder: QueryBuilder<Model, 'id'>, where?: WhereParam): QueryBuilder<Model, "id">;
     /**
      * Retrive single record
      * @param {Number|String} id Record id
      * @returns {Promise<this>} reolves to model instance
      */
-    static find(id: string | number): import("../node_modules/dexie/dist/dexie").PromiseExtended<any>;
+    static find<T extends typeof Model>(this: T, id: string | number): Promise<InstanceType<T>>;
     /**
     * Retrive single record
     * @returns {Promise} reolves to model instance
     */
-    static first(where?: WhereParam): Promise<any> | undefined;
-    static last(where?: WhereParam): import("../node_modules/dexie/dist/dexie").PromiseExtended<any> | Promise<Model> | undefined;
+    static first<T extends typeof Model>(this: T, where?: WhereParam): Promise<InstanceType<T>>;
+    static last<T extends typeof Model>(this: T, where?: WhereParam): Promise<InstanceType<T>>;
     /**
      * Count record
      * @param {Object} where Where parameter
      @returns {Promise} count promise
      */
-    static count(where?: WhereParam): Promise<number> | undefined;
+    static count(where?: WhereParam): Promise<number>;
     /**
      * Count record
      * @param {String} column
@@ -66,32 +66,32 @@ export declare class Model {
     /**
  * Get multiple record
  */
-    static fetch(builder: QueryBuilder, limit?: number, page?: number, order?: string, desc?: boolean): Promise<any> | undefined;
+    static fetch<T extends typeof Model>(builder: QueryBuilder, limit?: number, page?: number, order?: string, desc?: boolean): Promise<InstanceType<T>[]>;
     /**
      * Get multiple records
      
      */
-    static all(whereCol: string, limit?: number, page?: number, order?: string, desc?: boolean): Promise<any> | undefined;
+    static all<T extends typeof Model>(this: T, where?: WhereParam, limit?: number, page?: number, order?: string, desc?: boolean): Promise<InstanceType<T>[]>;
     /**
      * Add a filter callback to the query builder for the next query
      * @param callback
      * @returns
      */
-    static filter(callback: FilterHandler<Model>): QueryBuilder<any, any>;
+    static filter(callback: FilterHandler<Model>): QueryBuilder<Model, "id">;
     /**
      * Create a query builder
      * @param index
      * @returns
      */
-    static where(column: string): QueryBuilder<any, any>;
+    static where(column: string): QueryBuilder<Model, "id">;
     /**
      * Where in clause
      * @param key
      * @param values
      * @returns
      */
-    static whereIn(key: string, values: any[]): Promise<any> | undefined;
-    static whereNotIn(key: string, values: any[]): Promise<any> | undefined;
+    static whereIn(key: string, values: any[]): Promise<any>;
+    static whereNotIn(key: string, values: any[]): Promise<any>;
     /**
      * Insert mutiple record
      * @param {Object} data
@@ -134,12 +134,12 @@ export declare class Model {
     /**
      * Get query builder
      */
-    static getQueryBuilder(): QueryBuilder<any, any>;
+    static getQueryBuilder<T extends Model = Model, Key extends string = 'id'>(): QueryBuilder<T, Key>;
     /**
      *
      * @returns {Dexie.table}
      */
-    static query(): QueryBuilder<any, any>;
+    static query(): QueryBuilder<Model, "id">;
     /**
      *
      * @returns {}

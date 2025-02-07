@@ -9,7 +9,7 @@ import { PostModel } from "./PostModel";
 
 const fixtures = {
     posts: makePosts(10, 1),
-    employees: [].concat(
+    employees: ([] as any[]).concat(
         makeEmployees(10, 50000, 3, 1),
         makeEmployees(5, 100000, 5, 11, 1),
         /**
@@ -111,8 +111,8 @@ describe('Queries', () => {
         it('create new record', async function () {
             await db.table('posts').clear();
 
-            let post = await PostModel.create({
-                title: 'Foo',
+            let post = await PostModel.create<PostModel>({
+                title: 
             });
             expect(post).toBeDefined();
             expect(post.title).toEqual('Foo');
@@ -146,6 +146,7 @@ describe('Queries', () => {
         });
         it('return undefined for non existing', async function () {
             let post = await PostModel.find(55);
+            
             expect(post).toEqual(undefined);
         });
 

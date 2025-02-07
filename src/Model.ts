@@ -53,7 +53,7 @@ export class Model {
     }
 
 
-    static create(data: Record<string, any>) {
+    static create<T extends typeof Model>(this: T, data: Record<string, any>) {
         var table = this.getTableConnection();
         let item = new this();
         item.populate(data);
@@ -68,7 +68,7 @@ export class Model {
             this.setLastInsert(id);
             item._afterSave();
             return item;
-        });
+        }) as Promise<InstanceType<T>>;;
 
     }
 
@@ -125,41 +125,42 @@ export class Model {
         return table.delete(this.id);
     }
 
-    protected static _where(builder: QueryBuilder, where?: Record<string, any>){
-        
+    protected static _where(builder: QueryBuilder<Model, 'id'>, where?: WhereParam){
+        let _result = builder;
         if (where) {
             for(let key in where){
-                builder.where(key as keyof Model).equals(where[key]);
+                _result = builder.where(key as keyof Model).equals(where[key]);
             }
         }
+        return _result;
     }
     /**
      * Retrive single record 
      * @param {Number|String} id Record id
      * @returns {Promise<this>} reolves to model instance
      */
-    static find(id: string | number) {
+    static async find<T extends typeof Model>(this: T, id: string | number){
         var table = this.getTableConnection();
 
-        return table.get(id);
+        return table.get(id) as Promise<InstanceType<T>>;
     }
 
     /**
     * Retrive single record 
     * @returns {Promise} reolves to model instance
     */
-    static first(where?: WhereParam) {
+    static first<T extends typeof Model>(this: T, where?: WhereParam){
         let builder = this.getQueryBuilder();
         this._where(builder, where);
        
-        return builder.first();
+        return builder.first() as Promise<InstanceType<T>>;
     }
 
-    static last(where?: WhereParam) {
+    static last<T extends typeof Model>(this: T, where?: WhereParam) {
         let builder = this.getQueryBuilder();
         this._where(builder, where);
 
-        return builder.last();
+        return builder.last() as Promise<InstanceType<T>>;
     }
 
 
@@ -198,7 +199,7 @@ export class Model {
     /**
  * Get multiple record
  */
-    static fetch(builder:QueryBuilder, limit?: number, page?:number, order?: string, desc?:boolean) {
+    static fetch<T extends typeof Model>(builder:QueryBuilder, limit?: number, page?:number, order?: string, desc?:boolean) {
 
         if (page && limit) {
             var offset = (page - 1) * limit;
@@ -214,7 +215,7 @@ export class Model {
         }
 
 
-        return builder.all();
+        return builder.all() as Promise<InstanceType<T>[]>;
     }
 
 
@@ -222,11 +223,15 @@ export class Model {
      * Get multiple records
      
      */
-    static all(whereCol:string, limit?:number, page?:number, order?:string, desc?:boolean) {
+    static all<T extends typeof Model>(this: T, where?:WhereParam, limit?:number, page?:number, order?:string, desc?:boolean) {
 
-        let builder = whereCol ? this.where(whereCol) : this.getQueryBuilder();
 
-        return this.fetch(builder, limit, page, order, desc);
+        let builder = this.getQueryBuilder();
+        if(where){
+            builder = this._where(builder, where)
+        }
+
+        return this.fetch(builder, limit, page, order, desc) as Promise<InstanceType<T>[]>;
 
     }
 
@@ -356,9 +361,9 @@ export class Model {
     /**
      * Get query builder
      */
-    static getQueryBuilder() {
+    static getQueryBuilder<T extends Model = Model, Key extends string = 'id'>() {
         const conn = this.getTableConnection();
-        return new QueryBuilder(conn);
+        return new QueryBuilder<T, Key>(conn);
     }
 
     /**

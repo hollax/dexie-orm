@@ -5,6 +5,7 @@ export class PostModel extends Model{
 
     title?: string
     status?:string
+    body?: string
 
     static tableName = 'posts';
 
