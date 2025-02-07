@@ -17,6 +17,8 @@ const {Model, setup} = require('@hollax/dexie-orm');
 
 class Post extend Model{
 
+    static tableName = 'posts';
+
     static getSchema(){
         return [
             {
@@ -39,11 +41,7 @@ Somewhere in the app:
     const Dexie = require('dexie');
 
     let db = new Dexie("MyDatabase");
-    setup(db, {
-        posts: Post,
-        //register other models
-        users: User
-    );
+    setup(db, [Post,User]);
 
 ```
 
