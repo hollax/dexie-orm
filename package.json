@@ -6,7 +6,7 @@
   "private": false,
   "type": "module",
   "types": "dist/types",
-  "files": ["lib"],
+  "files": ["lib", "dist/types"],
   "scripts": {
     "test": "vitest",
     "dev": "vite",
