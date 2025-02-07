@@ -1,16 +1,17 @@
+import {describe, it} from 'vitest'
 
 
 
 describe('filters', ()=>{
     describe('where', ()=>{
 
-        test('use key and index', function(){
+        it('use key and index', function(){
 
 
 
         });
 
-        test('generate a filter callback if build has key', function(){
+        it('generate a filter callback if build has key', function(){
 
 
 

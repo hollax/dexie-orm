@@ -6,9 +6,7 @@ import { DexieModelStatic, SchemaConfig } from "./types";
  * @param {Dexie} db 
  * @param {Object} db Key value pair table name key and model class as value  
  */
-export const  setup = (db: any, models: {
-    [key: string]: (new () => Model) & DexieModelStatic;  // Each value is a class constructor of type MyModel
-  })=> {
+export const  setup = (db: any, models: ((new () => Model) & DexieModelStatic)[])=> {
 
     /**
      * Group model schema by version
@@ -18,9 +16,10 @@ export const  setup = (db: any, models: {
 
     var recentModelColumns:  Record<string, SchemaConfig['columns']>  = {};
 
-    for (let table in models) {
-        let modelClass = models[table];
+    for (let modelClass of models) {
+        const table = modelClass.getTableName();
         let schema = modelClass.getSchema();
+        
         if (Array.isArray(schema)) {
 
             schema.map((schema) => {
@@ -45,7 +44,8 @@ export const  setup = (db: any, models: {
     for (let version in items) {
 
         //ensure that all models are added has key for each version
-        for (let table in models) {
+        for (let modelClass of models) {
+            const table = modelClass.getTableName();
             if (items[version].hasOwnProperty(table)) {
                 items[version][table] = recentModelColumns[table];
             }
@@ -60,11 +60,10 @@ export const  setup = (db: any, models: {
 
     }
     //save table connection in model classes
-    for (let table in models) {
-        let modelClass = models[table];
-        modelClass.connection = db[table];
-        modelClass.tableName = table;
-        modelClass.connection.mapToClass(modelClass);
+    for (let modelClass of models) {
+        const table = modelClass.getTableName();
+        modelClass.setTableConnection(db[table]);
+        modelClass.getTableConnection().mapToClass(modelClass as any);
     }
 }
 

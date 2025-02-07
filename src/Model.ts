@@ -22,13 +22,17 @@ export class Model {
      */
     static tableName = '';
 
-    protected static connection?: Dexie.Table
+    protected static _connection?: Dexie.Table
     /**
      * Setup class propertis use DexieModel.getColumns() returned value
      * @param {Object} data Updates class properties
      */
     constructor(data = {}) {
         this.populate(data);
+    }
+
+    static get connection(){
+        return this._connection;
     }
 
     populate(data: Record<string, any>) {
@@ -125,7 +129,7 @@ export class Model {
         
         if (where) {
             for(let key in where){
-                builder.where(key).equals(where[key]);
+                builder.where(key as keyof Model).equals(where[key]);
             }
         }
     }
@@ -218,9 +222,9 @@ export class Model {
      * Get multiple records
      
      */
-    static all(where:WhereParam, limit?:number, page?:number, order?:string, desc?:boolean) {
+    static all(whereCol:string, limit?:number, page?:number, order?:string, desc?:boolean) {
 
-        let builder = where ? this.where(where) : this.getQueryBuilder();
+        let builder = whereCol ? this.where(whereCol) : this.getQueryBuilder();
 
         return this.fetch(builder, limit, page, order, desc);
 
@@ -240,10 +244,10 @@ export class Model {
      * @param index 
      * @returns 
      */
-    static where(where?: WhereParam) {
+    static where(column: string) {
 
         const builder = this.getQueryBuilder()
-        this._where(builder, where);
+        builder.where(column)
 
         return builder;
     }
@@ -335,7 +339,7 @@ export class Model {
      @returns {Dexie[table]}
      */
     static setTableConnection(db: Dexie.Table) {
-        this.connection = db;
+        this._connection = db;
     }
 
     /**
@@ -343,10 +347,10 @@ export class Model {
      * @returns {Dexie.table}
      */
     static getTableConnection() {
-        if(!this.connection){
+        if(!this._connection){
             throw('Table connection is not set. Do this with the setTableConnection method')
         }
-        return this.connection;
+        return this._connection;
     }
 
     /**
@@ -404,7 +408,13 @@ export class Model {
 
     /**
      */
-    static getTableName() {
+    static setTableName(name: string) {
+        this.tableName = name;
+    }
+
+    /**
+     */
+      static getTableName() {
         return this.tableName;
     }
 

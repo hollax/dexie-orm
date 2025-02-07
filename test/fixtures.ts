@@ -1,5 +1,5 @@
 
-const makePosts = (limit = 10, idFrom = 1, status = 'publish')=>{
+export const makePosts = (limit = 10, idFrom = 1, status = 'publish')=>{
     return Array.from(Array(limit).keys()).map(n => ({
         id: idFrom+n,
         title: `Post ${idFrom+n}`,
@@ -7,7 +7,7 @@ const makePosts = (limit = 10, idFrom = 1, status = 'publish')=>{
         status: status
     }));
 } 
-const makeEmployees = (limit = 10, salary = 50000, yearsOfExperience = 3, idFrom = 1, active = 1)=>{
+export const makeEmployees = (limit = 10, salary = 50000, yearsOfExperience = 3, idFrom = 1, active = 1)=>{
     return Array.from(Array(limit).keys()).map(n => ({
         active,
         id: idFrom+n,
@@ -17,7 +17,3 @@ const makeEmployees = (limit = 10, salary = 50000, yearsOfExperience = 3, idFrom
     }));
 } 
 
-module.exports = {
-    makeEmployees,
-    makePosts
-}

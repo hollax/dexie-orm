@@ -1,11 +1,11 @@
-require("fake-indexeddb/auto");
+import "fake-indexeddb/auto";
 
-const Dexie = require('dexie');
-const { query } = require("../src/Model");
-const setup = require("../src/setup");
-const EmployeeModel = require('./EmployeeModel').default;
-const PostModel = require('./PostModel').default;
-const { makeEmployees, makePosts } = require('./fixtures');
+import {afterEach, beforeEach, describe, expect,it} from 'vitest'
+import { setup } from "../src/setup";
+import Dexie from "../node_modules/dexie/dist/dexie";
+import { makeEmployees, makePosts } from "./fixtures";
+import { EmployeeModel } from "./EmployeeModel";
+import { PostModel } from "./PostModel";
 
 const fixtures = {
     posts: makePosts(10, 1),
@@ -24,24 +24,22 @@ var db = new Dexie("MyDatabase");
 
 describe('setup', () => {
 
-    test('create store', function () {
+    it('create store', function () {
 
         expect(PostModel.connection).toEqual(undefined);
-        expect(PostModel.tableName).toEqual(undefined);
-        setup(db, {
-            posts: PostModel,
-            employees: EmployeeModel
-        });
+        expect(PostModel.getTableName()).toEqual('posts');
+        setup(db, [PostModel, EmployeeModel]);
+        
         expect(PostModel.connection).toBeDefined();
         expect(PostModel.tableName).toBeDefined();
     });
 
-    test('create store for second model', () => {
+    it('create store for second model', () => {
         expect(EmployeeModel.connection).toBeDefined();
         expect(EmployeeModel.tableName).toBeDefined();
     })
 
-    test('maps store to class', function () {
+    it('maps store to class', function () {
 
 
         // expect(db.posts.schema.mappedClass).toBeDefined();
@@ -51,7 +49,7 @@ describe('setup', () => {
 
 describe('getSchema', () => {
 
-    test('return schema config ', function () {
+    it('return schema config ', function () {
         let schema = PostModel.getSchema();
         expect(schema).toBeDefined();
         expect(schema).toHaveLength(3);
@@ -77,7 +75,7 @@ describe('Queries', () => {
     describe('save', () => {
 
 
-        test('save new item in store', async function () {
+        it('save new item in store', async function () {
             await db.table('posts').clear();
 
             let post = new PostModel({
@@ -110,7 +108,7 @@ describe('Queries', () => {
 
     describe('create', () => {
 
-        test('create new record', async function () {
+        it('create new record', async function () {
             await db.table('posts').clear();
 
             let post = await PostModel.create({
@@ -121,7 +119,7 @@ describe('Queries', () => {
             expect(await db.posts.count()).toEqual(1);
                 
         });
-        test('update existing', async function () {
+        it('update existing', async function () {
             await db.table('posts').clear();
 
             let post = await PostModel.create({
@@ -140,13 +138,13 @@ describe('Queries', () => {
     });
     describe('find', () => {
 
-        test('return record', async function () {
+        it('return record', async function () {
             let post = await PostModel.find(1);
             expect(post).toBeInstanceOf(PostModel);
             expect(post.title).toEqual('Post 1');
             expect(post.body).toEqual('Body of post 1');
         });
-        test('return undefined for non existing', async function () {
+        it('return undefined for non existing', async function () {
             let post = await PostModel.find(55);
             expect(post).toEqual(undefined);
         });
@@ -155,14 +153,14 @@ describe('Queries', () => {
 
     describe('first', () => {
 
-        test('return record', async function () {
+        it('return record', async function () {
             let post = await PostModel.first({
                 title: 'Post 1'
             });
             expect(post).toBeInstanceOf(PostModel);
             expect(post.title).toEqual('Post 1');
         });
-        test('return undefined for non existing', async function () {
+        it('return undefined for non existing', async function () {
             let post = await PostModel.first({
                 title: 'Post 111'
             });
@@ -173,7 +171,7 @@ describe('Queries', () => {
 
     describe('last', () => {
 
-        test('return last record', async function () {
+        it('return last record', async function () {
             let post = await PostModel.last({
                 title: 'Post 10'
             });
@@ -184,28 +182,28 @@ describe('Queries', () => {
 
     describe('all', () => {
 
-        test('return all records', async function () {
+        it('return all records', async function () {
             let posts = await PostModel.all();
             expect(posts).toHaveLength(fixtures.posts.length);
             expect(posts[0]).toBeInstanceOf(PostModel);
             expect(posts[1]).toBeInstanceOf(PostModel);
         });
 
-        test('filter with where conditions', async function () {
+        it('filter with where conditions', async function () {
             let posts = await PostModel.all({
                 title: 'Post 1'
             });
             expect(posts).toHaveLength(1);
         });
 
-        test('use offset', async function () {
+        it('use offset', async function () {
             let posts = await PostModel.all(null, 5, 2);
             expect(posts).toHaveLength(5);
             expect(posts[0].title).toEqual('Post 6');
 
         });
 
-        test('sortBy', async()=>{
+        it('sortBy', async()=>{
             let posts = await PostModel.query()
             .sortBy('id', true).fetch();
             expect(posts[0].id).toEqual(10);
@@ -215,7 +213,7 @@ describe('Queries', () => {
 
     describe('above()', () => {
 
-        test('above', async function () {
+        it('above', async function () {
             let posts = await EmployeeModel
                 .where('salary')
                 .above(100000)
@@ -227,7 +225,7 @@ describe('Queries', () => {
     });
 
     describe('aboveOrEqual()', () => {
-        test('aboveOrEqual', async function () {
+        it('aboveOrEqual', async function () {
             let posts = await EmployeeModel
                 .where('salary')
                 .aboveOrEqual(100000)
@@ -239,7 +237,7 @@ describe('Queries', () => {
     });
     describe('anyOf()', () => {
 
-        test('check numbers', async function () {
+        it('check numbers', async function () {
             let posts = await EmployeeModel
                 .where('id')
                 .anyOf([7, 10, 11])
@@ -250,7 +248,7 @@ describe('Queries', () => {
             expect(posts[2].id).toEqual(11);
         });
 
-        test('anyOf with with below', async function () {
+        it('anyOf with with below', async function () {
             let posts = await EmployeeModel
                 .where('id')
                 .anyOf([7, 10, 11])
@@ -263,7 +261,7 @@ describe('Queries', () => {
             expect(posts[1].id).toEqual(10);
         });
 
-        test('case sensisitve', async function () {
+        it('case sensisitve', async function () {
             let posts = await EmployeeModel
                 .where('name')
                 .anyOf(['employee 1', 'employee 10'])
@@ -274,7 +272,7 @@ describe('Queries', () => {
 
     describe('anyOfIgnoreCase()', () => {
 
-        test('anyOfIgnoreCase', async function () {
+        it('anyOfIgnoreCase', async function () {
             let posts = await EmployeeModel
                 .where('name')
                 .anyOfIgnoreCase(['employee 1', 'employee 10'])
@@ -287,7 +285,7 @@ describe('Queries', () => {
 
     describe('below()', () => {
 
-        test('below', async function () {
+        it('below', async function () {
             let posts = await PostModel
                 .where('id')
                 .below(4)
@@ -298,7 +296,7 @@ describe('Queries', () => {
 
     describe('belowOrEqual()', () => {
 
-        test('return posts where id below or eq 5', async function () {
+        it('return posts where id below or eq 5', async function () {
             let posts = await PostModel
                 .where('id')
                 .belowOrEqual(4)
@@ -309,21 +307,21 @@ describe('Queries', () => {
 
     describe('bewteen()', () => {
 
-        test('include lower and upper bounds', async function () {
+        it('include lower and upper bounds', async function () {
             let posts = await PostModel
                 .where('id')
                 .between(1, 4)
                 .all();
             expect(posts).toHaveLength(4);
         });
-        test('exclude lower and upper bounds', async function () {
+        it('exclude lower and upper bounds', async function () {
             let posts = await PostModel
                 .where('id')
                 .between(1, 4, false, false)
                 .all();
             expect(posts).toHaveLength(2);
         });
-        test('exclude lower bound', async function () {
+        it('exclude lower bound', async function () {
             let posts = await PostModel
                 .where('id')
                 .between(1, 4, false)
@@ -331,7 +329,7 @@ describe('Queries', () => {
             expect(posts).toHaveLength(3);
         });
 
-        test('exclude upper bound', async function () {
+        it('exclude upper bound', async function () {
             let posts = await PostModel
                 .where('id')
                 .between(1, 4, false, false)
@@ -339,7 +337,7 @@ describe('Queries', () => {
             expect(posts).toHaveLength(2);
         });
 
-        test('as second filter', async function () {
+        it('as second filter', async function () {
             let posts = await PostModel
                 .where('status')
                 .equals('publish')
@@ -348,7 +346,7 @@ describe('Queries', () => {
                 .all();
             expect(posts).toHaveLength(4);
         });
-        test('as second filter include lower and upper bounds', async function () {
+        it('as second filter include lower and upper bounds', async function () {
             let posts = await PostModel
                 .where('status')
                 .equals('publish')
@@ -357,7 +355,7 @@ describe('Queries', () => {
                 .all();
             expect(posts).toHaveLength(4);
         });
-        test('as second filter exlude lower ', async function () {
+        it('as second filter exlude lower ', async function () {
             let posts = await PostModel
                 .where('status')
                 .equals('publish')
@@ -371,7 +369,7 @@ describe('Queries', () => {
 
     describe('equals()', () => {
 
-        test('check numbers', async function () {
+        it('check numbers', async function () {
             let posts = await EmployeeModel
                 .where('id')
                 .equals(1)
@@ -380,7 +378,7 @@ describe('Queries', () => {
             expect(posts[0].id).toEqual(1);
         });
 
-        test('case insensitve match', async function () {
+        it('case insensitve match', async function () {
             let posts = await EmployeeModel
                 .where('name')
                 .equals('Employee 1')
@@ -389,7 +387,7 @@ describe('Queries', () => {
             expect(posts[0].id).toEqual(1);
         });
 
-        test('case insensitve no match', async function () {
+        it('case insensitve no match', async function () {
             let posts = await EmployeeModel
                 .where('name')
                 .equals('employee 1')
@@ -399,7 +397,7 @@ describe('Queries', () => {
     });
 
     describe('equalsIgnoreCase()', () => {
-        test('case insensitve match', async function () {
+        it('case insensitve match', async function () {
             let posts = await EmployeeModel
                 .where('name')
                 .equalsIgnoreCase('Employee 1')
@@ -407,7 +405,7 @@ describe('Queries', () => {
             expect(posts).toHaveLength(1);
             expect(posts[0].id).toEqual(1);
         });
-        test('case insensitve no match', async function () {
+        it('case insensitve no match', async function () {
             let posts = await EmployeeModel
                 .where('name')
                 .equalsIgnoreCase('employee 1')
@@ -418,7 +416,7 @@ describe('Queries', () => {
     });
 
     describe('filter', () => {
-        test('filter records with callback', async function () {
+        it('filter records with callback', async function () {
             let posts = await EmployeeModel
                 .filter((row)=> ['Employee 1', 'Employee 2'].includes(row.name) )
                 .all();
@@ -428,7 +426,7 @@ describe('Queries', () => {
         });
     })
     describe('like', () => {
-        test('filter records', async function () {
+        it('filter records', async function () {
             let posts = await EmployeeModel
                 .where('name')
                 .like('ployee 1')
@@ -439,7 +437,7 @@ describe('Queries', () => {
         });
     })
     describe('noneOf', () => {
-        test('case insensitve match', async function () {
+        it('case insensitve match', async function () {
             let posts = await EmployeeModel
                 .where('name')
                 .noneOf(['Employee 1', 'Employee 2'])
@@ -450,7 +448,7 @@ describe('Queries', () => {
                 expect.not.arrayContaining([1, 2])
             );
         });
-        test('case sensitve no match', async function () {
+        it('case sensitve no match', async function () {
             let posts = await EmployeeModel
                 .where('name')
                 .noneOf(['employee 1', 'employee 2'])
@@ -460,14 +458,14 @@ describe('Queries', () => {
     });
 
     describe('notEqual', () => {
-        test('check numbers', async function () {
+        it('check numbers', async function () {
             let posts = await EmployeeModel
                 .where('id')
                 .notEqual(1)
                 .all();
             expect(posts).toHaveLength(fixtures.employees.length - 1);
         });
-        test('case sensitve match', async function () {
+        it('case sensitve match', async function () {
             let posts = await EmployeeModel
                 .where('name')
                 .notEqual('Employee 1')
@@ -478,7 +476,7 @@ describe('Queries', () => {
             );
             expect(posts).toHaveLength(fixtures.employees.length - 1);
         });
-        test('case sensitve no match', async function () {
+        it('case sensitve no match', async function () {
             let posts = await EmployeeModel
                 .where('name')
                 .notEqual('employee 1')
@@ -488,7 +486,7 @@ describe('Queries', () => {
     });
 
     describe('startsWith', () => {
-        test('case sensitve match', async function () {
+        it('case sensitve match', async function () {
             let posts = await EmployeeModel
                 .where('name')
                 .startsWith('Emplo')
@@ -499,7 +497,7 @@ describe('Queries', () => {
     });
 
     describe('startsWithAnyOf', () => {
-        test('case sensitve match', async function () {
+        it('case sensitve match', async function () {
             await EmployeeModel.insertAll([
                 {
                     name: 'John Doe'
@@ -514,7 +512,7 @@ describe('Queries', () => {
                 .all();
             expect(posts).toHaveLength(fixtures.employees.length + 1);
         });
-        test('case sensitve no match', async function () {
+        it('case sensitve no match', async function () {
             await EmployeeModel.insertAll([
                 {
                     name: 'John Doe'
@@ -531,7 +529,7 @@ describe('Queries', () => {
         });
     });
     describe('startsWithAnyOfIgnoreCase', () => {
-        test('case sensitve match', async function () {
+        it('case sensitve match', async function () {
             await EmployeeModel.insertAll([
                 {
                     name: 'John Doe'
@@ -547,7 +545,7 @@ describe('Queries', () => {
             expect(posts).toHaveLength(fixtures.employees.length + 1);
         });
 
-        test('as second filter', async function () {
+        it('as second filter', async function () {
             await EmployeeModel.insertAll([
                 {
                     name: 'John Doe',
@@ -570,7 +568,7 @@ describe('Queries', () => {
         });
     });
     describe('startsWithIgnoreCase', () => {
-        test('case sensitve match', async function () {
+        it('case sensitve match', async function () {
             await EmployeeModel.insertAll([
                 {
                     name: 'John Doe'
@@ -586,7 +584,7 @@ describe('Queries', () => {
             expect(posts).toHaveLength(fixtures.employees.length);
         });
 
-        test('as second filter', async function () {
+        it('as second filter', async function () {
             await EmployeeModel.insertAll([
                 {
                     name: 'John Doe',
@@ -609,7 +607,7 @@ describe('Queries', () => {
 
     describe('custom where conditions', function () {
 
-        test('multiple where conditions', async function () {
+        it('multiple where conditions', async function () {
             let posts = await EmployeeModel
                 .where('salary')
                 .between(40000, 100001)
@@ -621,7 +619,7 @@ describe('Queries', () => {
         
     });
     describe('del', () => {
-        test('delete record', async () => {
+        it('delete record', async () => {
             let post = await PostModel.find(1);
             expect(post).toBeInstanceOf(PostModel);
             await post.delete()
@@ -632,7 +630,7 @@ describe('Queries', () => {
     });
 
     describe('truncate', () => {
-        test('remove all records', async function () {
+        it('remove all records', async function () {
             expect(await db.posts.count()).toBeGreaterThan(0);
             await PostModel.truncate();
             expect(await db.posts.count()).toEqual(0);
@@ -643,7 +641,7 @@ describe('Queries', () => {
 
     describe('insertAll', () => {
 
-        test('insert multiple', async () => {
+        it('insert multiple', async () => {
 
             await db.table('employees').clear();
             await EmployeeModel.insertAll(fixtures.employees);
@@ -656,7 +654,7 @@ describe('Queries', () => {
     });
 
     describe('updateAll', () => {
-        test('update multiple', async () => {
+        it('update multiple', async () => {
             await EmployeeModel.updateAll([
                 {
                     id: 1,
@@ -676,11 +674,11 @@ describe('Queries', () => {
     });
 
     describe('whereIn', () => {
-        test('return records where column values in filter', async () => {
+        it('return records where column values in filter', async () => {
             let items = await EmployeeModel.whereIn('id', [1, 2]);
             expect(items).toHaveLength(2);
         });
-        test('return records where column values in filter', async () => {
+        it('return records where column values in filter', async () => {
             let items = await EmployeeModel
                 .whereIn('years_of_experience', [2, 10]);
             expect(items).toHaveLength(2);
@@ -688,22 +686,22 @@ describe('Queries', () => {
     });
 
     describe('deleteAll', () => {
-        test('delete multiple', async () => {
+        it('delete multiple', async () => {
             await EmployeeModel.deleteAll([1, 2]);
             expect(await db.employees.count()).toEqual(fixtures.employees.length - 2);
         });
     });
 
     describe('count', () => {
-        test('return total', async () => {
+        it('return total', async () => {
             expect(await EmployeeModel.count()).toEqual(fixtures.employees.length);
         });
-        test('filter where param', async () => {
+        it('filter where param', async () => {
             expect(await EmployeeModel.count({
                 active: 0
             })).toEqual(2);
         });
-        test('return total with filter', async () => {
+        it('return total with filter', async () => {
             expect(
                 await EmployeeModel
                 .where('active')

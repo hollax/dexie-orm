@@ -1,2 +1,2 @@
-export {Model as DexieModel} from './Model'
-export {setup} from './setup'
+export * from './Model'
+export * from './setup'

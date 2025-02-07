@@ -1,4 +1,5 @@
 
+import Dexie from "../node_modules/dexie/dist/dexie.js"
 import { QueryBuilder } from "./QueryBuilder.js"
 
 export type SchemaConfig =  {
@@ -12,7 +13,8 @@ export type DexieModelStatic =  {
     getSchema():SchemaConfig[],
     getTableName(): string,
     getQueryBuilder(): QueryBuilder,
+    setTableConnection(conn: Dexie.Table):void
+    getTableConnection(): Dexie.Table
     //dexie collection
-    connection:any,
-    tableName: string
+    setTableName(name: string):void
 }

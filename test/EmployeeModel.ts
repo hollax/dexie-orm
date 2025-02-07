@@ -1,8 +1,10 @@
-const Model = require('../src/Model');
+import { Model } from "../src/Model";
 
 
-class EmployeeModel extends Model{
+export class EmployeeModel extends Model{
 
+    static tableName = 'employees';
+    
     static getSchema(){
         return [
             {
@@ -13,7 +15,3 @@ class EmployeeModel extends Model{
     }
 }
 
-
-module.exports = {
-    default: EmployeeModel
-}

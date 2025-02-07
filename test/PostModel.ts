@@ -1,7 +1,13 @@
-const Model = require('../src/Model');
+import { Model } from "../src/Model";
 
 
-class PostModel extends Model{
+export class PostModel extends Model{
+
+    title?: string
+    status?:string
+
+    static tableName = 'posts';
+
 
     static getSchema(){
         return [
@@ -21,7 +27,3 @@ class PostModel extends Model{
     }
 }
 
-
-module.exports = {
-    default: PostModel
-}
