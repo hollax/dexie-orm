@@ -1,6 +1,6 @@
 {
   "name": "@hollax/dexie-orm",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Simple ORM for dexie js",
   "main": "src/index.js",
   "private": false,
