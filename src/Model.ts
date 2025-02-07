@@ -142,7 +142,7 @@ export class Model {
     static async find<T extends typeof Model>(this: T, id: string | number){
         var table = this.getTableConnection();
 
-        return table.get(id) as Promise<InstanceType<T>>;
+        return table.get(id) as Promise<InstanceType<T> | undefined>;
     }
 
     /**
@@ -153,14 +153,14 @@ export class Model {
         let builder = this.getQueryBuilder();
         this._where(builder, where);
        
-        return builder.first() as Promise<InstanceType<T>>;
+        return builder.first() as Promise<InstanceType<T> | undefined>;
     }
 
     static last<T extends typeof Model>(this: T, where?: WhereParam) {
         let builder = this.getQueryBuilder();
         this._where(builder, where);
 
-        return builder.last() as Promise<InstanceType<T>>;
+        return builder.last() as Promise<InstanceType<T> | undefined>;
     }
 
 

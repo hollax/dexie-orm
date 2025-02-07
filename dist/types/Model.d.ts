@@ -42,13 +42,13 @@ export declare class Model {
      * @param {Number|String} id Record id
      * @returns {Promise<this>} reolves to model instance
      */
-    static find<T extends typeof Model>(this: T, id: string | number): Promise<InstanceType<T>>;
+    static find<T extends typeof Model>(this: T, id: string | number): Promise<InstanceType<T> | undefined>;
     /**
     * Retrive single record
     * @returns {Promise} reolves to model instance
     */
-    static first<T extends typeof Model>(this: T, where?: WhereParam): Promise<InstanceType<T>>;
-    static last<T extends typeof Model>(this: T, where?: WhereParam): Promise<InstanceType<T>>;
+    static first<T extends typeof Model>(this: T, where?: WhereParam): Promise<InstanceType<T> | undefined>;
+    static last<T extends typeof Model>(this: T, where?: WhereParam): Promise<InstanceType<T> | undefined>;
     /**
      * Count record
      * @param {Object} where Where parameter
