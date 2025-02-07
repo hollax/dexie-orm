@@ -1,11 +1,28 @@
-const Dexie = require('dexie');
-const QueryBuilder = require('./QueryBuilder');
+import Dexie from '../node_modules/dexie/dist/dexie';
+import {FilterHandler, QueryBuilder} from './QueryBuilder';
+import { SchemaConfig } from './types';
 
-let lastInserts = {};
+let lastInserts: Record<string, string | number> = {};
 
-class DexieModel {
+export type WhereParam =  Record<string, any>;
+
+export type ModelStatic = {
+    getTableConnection(): Dexie.Table,
+    _getSaveData(obj: Model, data?: Record<string, any>): Record<string, any>,
+    setLastInsert(key: number):void
+}
+export class Model {
 
 
+    id?: string | number;
+    created?: string | number | Date;
+
+    /**
+     * This should be overiden by the derived class
+     */
+    static tableName = '';
+
+    protected static connection?: Dexie.Table
     /**
      * Setup class propertis use DexieModel.getColumns() returned value
      * @param {Object} data Updates class properties
@@ -14,11 +31,12 @@ class DexieModel {
         this.populate(data);
     }
 
-    populate(data) {
+    populate(data: Record<string, any>) {
+        const self = this;
         // set properties
         for (let i in data) {
             if (typeof data[i] !== 'function') {
-                this[i] = data[i];
+                self[i as keyof Model] = data[i];
             }
         }
     }
@@ -31,7 +49,7 @@ class DexieModel {
     }
 
 
-    static create(data) {
+    static create(data: Record<string, any>) {
         var table = this.getTableConnection();
         let item = new this();
         item.populate(data);
@@ -50,8 +68,8 @@ class DexieModel {
 
     }
 
-    static _getSaveData(obj, data) {
-        let row = {};
+    static _getSaveData(obj: Record<string, any>, data?: Record<string, any>) {
+        let row: Record<string, any>= {};
         let cols = Object.keys(obj);
         cols.map(col => row[col] = obj[col]);
         return row;
@@ -61,14 +79,15 @@ class DexieModel {
      * Saves the class property values
      @returns {Promise} put promise
      */
-    save(data) {
-        var table = this.constructor.getTableConnection();
+    save(data?: Record<string, any>) {
+        const selfStatic = (this.constructor as any) as ModelStatic;
+        var table = selfStatic.getTableConnection() as Dexie.Table;
         let status, row;
         this._beforeSave();
 
         //update
         if (this.id) {
-            row = this.constructor._getSaveData(this, data);
+            row = selfStatic._getSaveData(this, data);
             status = table.update(this.id, this); // Will only save own props.
         } else {
 
@@ -76,13 +95,13 @@ class DexieModel {
                 this.created = new Date();
             }
 
-            row = this.constructor._getSaveData(this, data);
+            row = selfStatic._getSaveData(this, data);
             delete row.id;
 
             status = table.add(row);
             status.then((id) => {
                 this.id = id;
-                this.constructor.setLastInsert(id);
+                selfStatic.setLastInsert(id);
             });
         }
 
@@ -97,17 +116,25 @@ class DexieModel {
     @returns {Promise} delete promise
      */
     delete() {
-        var table = this.constructor.getTableConnection();
+        var table = (this.constructor as any).getTableConnection();
 
         return table.delete(this.id);
     }
 
+    protected static _where(builder: QueryBuilder, where?: Record<string, any>){
+        
+        if (where) {
+            for(let key in where){
+                builder.where(key).equals(where[key]);
+            }
+        }
+    }
     /**
      * Retrive single record 
      * @param {Number|String} id Record id
      * @returns {Promise<this>} reolves to model instance
      */
-    static find(id) {
+    static find(id: string | number) {
         var table = this.getTableConnection();
 
         return table.get(id);
@@ -115,25 +142,18 @@ class DexieModel {
 
     /**
     * Retrive single record 
-    * @param {Number} id Record id
     * @returns {Promise} reolves to model instance
     */
-    static first(where) {
+    static first(where?: WhereParam) {
         let builder = this.getQueryBuilder();
-
-        if (where) {
-            builder.where(where);
-        }
-
+        this._where(builder, where);
+       
         return builder.first();
     }
 
-    static last(where) {
+    static last(where?: WhereParam) {
         let builder = this.getQueryBuilder();
-
-        if (where) {
-            builder.where(where);
-        }
+        this._where(builder, where);
 
         return builder.last();
     }
@@ -144,13 +164,10 @@ class DexieModel {
      * @param {Object} where Where parameter
      @returns {Promise} count promise
      */
-    static count(where) {
-
+    static count(where?: WhereParam) {
         var builder = this.getQueryBuilder();
-
-        if (where) {
-            builder.where(where);
-        }
+        this._where(builder, where);
+      
         return builder.count();
     }
 
@@ -161,31 +178,25 @@ class DexieModel {
      * @param {Function} filter
      @returns {Promise} count promise
      */
-    static countIn(column, values, filter) {
+    static countIn(column: string, values: any[], filter?: FilterHandler<Model>) {
 
         var table = this.getTableConnection();
 
-        table = table.where(column).anyOf(values);
+        let collection = table.where(column).anyOf(values);
 
         if (filter) {
-            table = table.and(filter);
+            collection = collection.and(filter);
         }
 
-        return table.count();
+        return collection.count();
     }
 
     /**
  * Get multiple record
- * @param {Dexie[table]} where
- * @param {Object} where
- * @param {Number} limit
- * @param {Number} page
- * @param {String} order name of column to use in dorting
- * @param {Boolean} desc Whether to sort indescending order
  */
-    static fetch(builder, limit, page, order, desc) {
+    static fetch(builder:QueryBuilder, limit?: number, page?:number, order?: string, desc?:boolean) {
 
-        if (page) {
+        if (page && limit) {
             var offset = (page - 1) * limit;
             builder.offset(offset);
         }
@@ -204,15 +215,10 @@ class DexieModel {
 
 
     /**
-     * Get multiple record
-     * @param {Object} where
-     * @param {Number} limit
-     * @param {Number} page
-     * @param {String} order name of column to use in dorting
-     * @param {Boolean} desc Whether to sort indescending order
-     * @returns {Promise<ThisType<this>[]>}
+     * Get multiple records
+     
      */
-    static all(where, limit, page, order, desc) {
+    static all(where:WhereParam, limit?:number, page?:number, order?:string, desc?:boolean) {
 
         let builder = where ? this.where(where) : this.getQueryBuilder();
 
@@ -220,17 +226,36 @@ class DexieModel {
 
     }
 
-    static filter(callback) {
+    /**
+     * Add a filter callback to the query builder for the next query
+     * @param callback 
+     * @returns 
+     */
+    static filter(callback: FilterHandler<Model>) {
         return this.getQueryBuilder().filter(callback);
     }
 
-    static where(index) {
-        return this.getQueryBuilder().where(index);
+    /**
+     * Create a query builder
+     * @param index 
+     * @returns 
+     */
+    static where(where?: WhereParam) {
+
+        const builder = this.getQueryBuilder()
+        this._where(builder, where);
+
+        return builder;
     }
 
 
-
-    static whereIn(key, values) {
+    /**
+     * Where in clause
+     * @param key 
+     * @param values 
+     * @returns 
+     */
+    static whereIn(key: string, values: any[]) {
 
         let builder = this.getQueryBuilder();
 
@@ -238,7 +263,7 @@ class DexieModel {
     }
 
 
-    static whereNotIn(key, values) {
+    static whereNotIn(key: string, values: any[]) {
 
         let builder = this.getQueryBuilder();
 
@@ -249,12 +274,12 @@ class DexieModel {
      * Insert mutiple record
      * @param {Object} data
      */
-    static insertAll(data) {
+    static insertAll(data: Record<string, any>[]) {
 
         var table = this.getTableConnection();
-        let p = table.bulkPut(data);
+        let p = table?.bulkPut(data);
 
-        p.then((lastKey) => {
+        p?.then((lastKey) => {
             this.setLastInsert(lastKey);
         });
 
@@ -264,7 +289,7 @@ class DexieModel {
      * Update Bulk
      * @param {any} data
      */
-    static updateAll(data) {
+    static updateAll(data: Record<string, any>[]) {
         var table = this.getTableConnection();
         return table.bulkPut(data);
     }
@@ -274,7 +299,7 @@ class DexieModel {
 
      * @param {any} keys
      */
-    static deleteAll(keys) {
+    static deleteAll(keys: string[] | number[]) {
         var table = this.getTableConnection();
         return table.bulkDelete(keys);
     }
@@ -293,7 +318,7 @@ class DexieModel {
      * Sets last insert 
      * @param {any} key
      */
-    static setLastInsert(key) {
+    static setLastInsert(key: number) {
         var tableName = this.getTableName();
         lastInserts[tableName] = key;
     }
@@ -309,7 +334,7 @@ class DexieModel {
      * Should be declared by derived class
      @returns {Dexie[table]}
      */
-    static setTableConnection(db) {
+    static setTableConnection(db: Dexie.Table) {
         this.connection = db;
     }
 
@@ -318,15 +343,18 @@ class DexieModel {
      * @returns {Dexie.table}
      */
     static getTableConnection() {
+        if(!this.connection){
+            throw('Table connection is not set. Do this with the setTableConnection method')
+        }
         return this.connection;
     }
 
     /**
-     * 
-     * @returns {QueryBuilder}
+     * Get query builder
      */
     static getQueryBuilder() {
-        return new QueryBuilder(this.getTableConnection());
+        const conn = this.getTableConnection();
+        return new QueryBuilder(conn);
     }
 
     /**
@@ -347,18 +375,22 @@ class DexieModel {
      *    version: number
      * }
      */
-    static getSchema() {
+    static getSchema(): SchemaConfig[]{
         return [
 
         ];
     }
 
     /**
-       Should be declared by derived class
-     * @returns {Array}
+        Tet table columns
      */
-    static getColumns() {
+    static getColumns(): string[] {
         let store = this.getTableConnection();
+
+        if(!store){
+            return [];
+        }
+
         let cols = [store.schema.primKey.name];
 
         store.schema.indexes.map((col) => {
@@ -371,36 +403,28 @@ class DexieModel {
     }
 
     /**
-      Should be declared by derived class
-
-     * @returns {String}
      */
     static getTableName() {
         return this.tableName;
     }
 
 
-    static getNumberValue(val) {
+    static getNumberValue(val: any) {
 
-        if (val && val.constructor === Number) {
+        if (typeof val === 'number') {
             return val
         }
-        if (val && val.constructor === Boolean) {
+        if (typeof val === 'boolean') {
             return val ? 1 : 0;
         }
-        if (val && val.constructor === String) {
-            return parseInt(val);
+        if (typeof val === 'string') {
+            return Number(val);
         }
-
-        // n could be NaN
-        var n = parseInt(val)
         //return 0 if Nan
-        return n || 0;
+        return isNaN(val)?  0 : Number(val);
 
     }
 
 
 }
 
-
-module.exports = DexieModel;

@@ -1,7 +1,9 @@
-const filters = require("./filters");
+import Dexie from "../node_modules/dexie/dist/dexie";
+import {filters} from "./filters";
+import type { Model } from "./Model";
 
-const makeFilter = function (key, fn, value) {
-    return (obj) => fn.call(obj, obj[key], value);
+const makeFilter = function (key: string, fn: Function, value: any) {
+    return (obj: any) => fn.call(obj, obj[key], value);
 };
 
 /**
@@ -11,39 +13,44 @@ const makeFilter = function (key, fn, value) {
  * @param {mixed} value 
  * @returns 
  */
-const makeIndex = function (store, fn, value) {
+const makeIndex = function (store:any, fn:Function, value: any) {
     return () => fn.call(store, store, value);
 };
 
+export type FilterHandler<T> = (Item: T)=> boolean;
 
-class QueryBuilder {
+export type FilterType = keyof typeof filters;
 
-    constructor(tableStore) {
+export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
+
+    _tableStore: Dexie.Table<T, Key> ;
+    _currentKeyPath?: keyof T;
+    _primaryQueryAdded = false;
+    _filters: FilterHandler<T>[] = [];
+    _index = 0;
+    _whereBulder? : any;
+    _collection? : ()=> Dexie.Collection<T, Key>;
+    _offset?: number;
+    _limit?: number;
+    _sortBy?: string;
+    _sortDesc = false;
+
+    constructor(tableStore: Dexie.Table<T, Key> ) {
         this._tableStore = tableStore;
-        this._currentKeyPath = null;
-        this._primaryQueryAdded = false;
-        this._filters = [];
-        this._index = 0;
-        this._whereBulder = null;
-        this._collection = null;
-        this._offset = null;
-        this._limit = null;
-        this._sortBy = null;
-        this._sortDesc = false;
     }
 
-    offset(offset) {
+    offset(offset: number) {
         this._offset = offset;
 
         return this;
     }
 
-    limit(limit) {
+    limit(limit: number) {
         this._limit = limit;
         return this;
     }
 
-    sortBy(key, desc = false) {
+    sortBy(key: string, desc = false) {
         this._sortBy = key;
         this._sortDesc = desc;
         return this;
@@ -53,97 +60,97 @@ class QueryBuilder {
         return this;
     }
 
-    where(keyPath) {
+    where(keyPath: keyof T) {
         if (this._index === 0) {
-            this._whereBulder = this._tableStore.where(keyPath);
+            this._whereBulder = this._tableStore.where(keyPath as string);
         }
         this._currentKeyPath = keyPath;
         return this;
     }
 
-    and(keyPath) {
+    and(keyPath: keyof T) {
         if (this._index === 0) {
             throw new Error('Can not use .and() with first where condition')
         }
         return this.where(keyPath);
     }
 
-    above(value) {
+    above(value: number) {
         return this._processFilter('above', value);
     }
 
-    aboveOrEqual(value) {
+    aboveOrEqual(value: number) {
         return this._processFilter('aboveOrEqual', value);
     }
 
 
-    anyOf(values) {
+    anyOf(values: any[]) {
         return this._processFilter('anyOf', values);
     }
 
-    anyOfIgnoreCase(values) {
+    anyOfIgnoreCase(values: any[]) {
         return this._processFilter('anyOfIgnoreCase', values);
     }
 
 
-    below(upperBound) {
+    below(upperBound: number) {
         return this._processFilter('below', upperBound);
     }
 
-    belowOrEqual(upperBound) {
+    belowOrEqual(upperBound: number) {
         return this._processFilter('belowOrEqual', upperBound);
     }
 
-    between(lowerBound, upperBound, includeLower = true, includeUpper = true) {
+    between(lowerBound: number, upperBound: number, includeLower = true, includeUpper = true) {
         return this._processFilter('between', [lowerBound, upperBound, includeLower, includeUpper]);
     }
 
-    equals(value) {
+    equals(value: any) {
         return this._processFilter('equals', value);
     }
 
-    equalsIgnoreCase(value) {
+    equalsIgnoreCase(value: any) {
         return this._processFilter('equalsIgnoreCase', value);
     }
 
-    like(value) {
+    like(value: any) {
        var q = value && value.toUpperCase();
-       var key = this._currentKeyPath;
+       var key = this._currentKeyPath as keyof T;
         return this.filter((item)=>{
-            return item[key] && item[key].toUpperCase().indexOf(q) !== -1;
+            return item[key] && (item[key] as string).toUpperCase().indexOf(q) !== -1;
         });
     }
 
-    in(values) {
+    in(values: any[]) {
         return this._processFilter('anyOf', values);
     }
 
-    noneOf(values) {
+    noneOf(values: any[]) {
         return this._processFilter('noneOf', values);
     }
 
-    notEqual(value) {
+    notEqual(value: any) {
         return this._processFilter('notEqual', value);
     }
 
 
-    startsWith(value) {
+    startsWith(value: string|number) {
         return this._processFilter('startsWith', value);
     }
 
-    startsWithAnyOf(values) {
+    startsWithAnyOf(values: string[] | number[]) {
         return this._processFilter('startsWithAnyOf', values);
     }
 
-    startsWithAnyOfIgnoreCase(values) {
+    startsWithAnyOfIgnoreCase(values: any[]) {
         return this._processFilter('startsWithAnyOfIgnoreCase', values);
     }
 
-    startsWithIgnoreCase(value) {
+    startsWithIgnoreCase(value: any) {
         return this._processFilter('startsWithIgnoreCase', value);
     }
 
-    filter(callback) {
+    filter(callback: FilterHandler<T>) {
         if (typeof callback === 'function') {
             this._filters.push(callback);
         }
@@ -153,29 +160,28 @@ class QueryBuilder {
 
     count() {
         let result = this.build();
+
         if (!result.sorted) {
-            return result.collection.count();
+            return result.collection?.count();
         }
-        return result.collection.then(arr => arr.length);
+        return result.collection?.then(arr => arr.length);
     }
 
     first() {
         let result = this.build();
         if (!result.sorted) {
-            return result.collection.first();
+            return result.collection?.first();
         }
-        return result.collection.then(arr => arr[0]);
+        return (result.collection as Promise<any>)?.then(arr => arr[0]);
     }
-
-
 
 
     last() {
         let result = this.build();
         if (!result.sorted) {
-            return result.collection.last();
+            return result.collection?.last();
         }
-        return result.collection.then(arr => arry[arr.length - 1]);
+        return result.collection?.then(arr => arr[arr.length - 1]);
     }
 
     fetch() {
@@ -185,13 +191,13 @@ class QueryBuilder {
     all() {
         let result = this.build();
         if (!result.sorted) {
-            return result.collection.toArray();
+            return result.collection?.toArray();
         }
-        return result.collection.then(arr => arr);
+        return (result.collection as Promise<any>)?.then(arr => arr);
     }
 
     delete() {
-        return this.build().delete();
+        return (this.build() as any).delete();
     }
 
     /**
@@ -199,13 +205,20 @@ class QueryBuilder {
      * @returns Collection
      */
     build() {
-        let collection;
+        let collection: Dexie.Collection | Dexie.Table<T, Key> ;
         let result = {
-            sorted: false
+            sorted: false,
+            collection: undefined 
+        } as {
+          sorted: false,
+          collection:  undefined | Dexie.Collection 
+        } | {
+            sorted:true,
+            collection: Promise<any> | Dexie.Table<T, Key>
         }
         //if filter was used
         if (this._collection) {
-            collection = this._collection();
+            collection = this._collection?.();
             
 
         } else if (this._whereBulder) {
@@ -223,7 +236,7 @@ class QueryBuilder {
                 collection = this._tableStore;
             }
             //call all callback fns on object
-            collection = collection.filter((obj) => {
+            collection = collection.filter((obj: T) => {
                 let noMath = this._filters.findIndex(fn => !fn(obj));
                 return noMath === -1;
             });
@@ -236,15 +249,15 @@ class QueryBuilder {
         if (this._limit) {
             collection = collection.limit(this._limit)
         }
+        result.collection = collection;
         if (this._sortBy) {
 
             if (this._sortDesc) {
                 collection = collection.reverse();
             }
-            collection = collection.sortBy(this._sortBy);
+            result.collection = (collection as | Dexie.Collection).sortBy(this._sortBy);
             result.sorted = true;
         }
-        result.collection = collection;
 
         return result;
     }
@@ -255,7 +268,7 @@ class QueryBuilder {
      * @param {String} filterName 
      * @param {mixed} value 
      */
-    _processFilter(filterName, value) {
+    _processFilter(filterName: keyof typeof filters, value: any) {
         let config = filters[filterName];
 
         if (!config) {
@@ -265,7 +278,7 @@ class QueryBuilder {
         if (this._index === 0) {
             this._collection = makeIndex(this._whereBulder, config.index, value);
         } else {
-            this._filters.push(makeFilter(this._currentKeyPath, config.filter, value));
+            this._filters.push(makeFilter(this._currentKeyPath as string, config.filter, value));
         }
         this._index++;
 
@@ -274,6 +287,3 @@ class QueryBuilder {
 
 
 }
-
-
-module.exports = QueryBuilder;

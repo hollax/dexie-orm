@@ -1,16 +1,22 @@
+import { Model } from "./Model";
+import { DexieModelStatic, SchemaConfig } from "./types";
+
 
 /**
  * @param {Dexie} db 
  * @param {Object} db Key value pair table name key and model class as value  
  */
-function setup(db, models) {
+export const  setup = (db: any, models: {
+    [key: string]: (new () => Model) & DexieModelStatic;  // Each value is a class constructor of type MyModel
+  })=> {
 
     /**
      * Group model schema by version
      */
-    var items = {};
-    var callbacks = {};
-    var recentModelColumns = {};
+    var items: Record<SchemaConfig['version'], Record<string, SchemaConfig['columns']>> = {};
+    var callbacks: Record<string, SchemaConfig['upgrade'][]> = {};
+
+    var recentModelColumns:  Record<string, SchemaConfig['columns']>  = {};
 
     for (let table in models) {
         let modelClass = models[table];
@@ -20,7 +26,7 @@ function setup(db, models) {
             schema.map((schema) => {
 
                 if (!schema.version || !schema.columns) {
-                    console.warn('Invalid schema configuraiont: ', this.getTableName(), schema)
+                    console.warn('Invalid schema configuraiont: ', modelClass.getTableName(), schema)
                     return;
                 }
 
@@ -48,7 +54,7 @@ function setup(db, models) {
         //fire version upgrad callbacks
         result.upgrade(function () {
             callbacks[version].map((cb) => {
-                cb.call(null, arguments);
+                cb?.call(null, db);
             });
         });
 
