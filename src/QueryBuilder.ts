@@ -164,7 +164,7 @@ export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
         if (!result.sorted) {
             return result.collection?.count();
         }
-        return (result.collection as Promise<Model[]>)?.then(arr => arr.length);
+        return (result.collection as Promise<Model[]>).then(arr => arr.length);
     }
 
     first() {
@@ -172,7 +172,7 @@ export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
         if (!result.sorted) {
             return result.collection?.first();
         }
-        return (result.collection as Promise<any>)?.then(arr => arr[0]);
+        return (result.collection as Promise<any>).then(arr => arr[0]);
     }
 
 
@@ -193,7 +193,7 @@ export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
         if (!result.sorted) {
             return result.collection?.toArray();
         }
-        return (result.collection as Promise<any>)?.then(arr => arr);
+        return (result.collection as Promise<any>).then(arr => arr);
     }
 
     delete() {
