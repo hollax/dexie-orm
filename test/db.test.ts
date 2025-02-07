@@ -6,6 +6,7 @@ import Dexie from "../node_modules/dexie/dist/dexie";
 import { makeEmployees, makePosts } from "./fixtures";
 import { EmployeeModel } from "./EmployeeModel";
 import { PostModel } from "./PostModel";
+import { TestDatabase } from "./db";
 
 const fixtures = {
     posts: makePosts(10, 1),
@@ -19,7 +20,8 @@ const fixtures = {
         makeEmployees(2, 150000, 10, 16, 0),
     )
 };
-var db = new Dexie("MyDatabase");
+var db = new TestDatabase("MyDatabase");
+
 
 
 describe('setup', () => {
@@ -86,12 +88,12 @@ describe('Queries', () => {
             expect(post.title).toEqual('Foo');
             expect(await db.posts.count()).toEqual(0);
             await post.save();
-            expect(post.id).toEqual(11, "Set id");
-
-            expect(await db.posts.count()).toEqual(1, "Insert new record");
+            expect(post.id, "Set id").toEqual(11);
+            
+            expect(await db.posts.count(), "Insert new record").toEqual(1);
             await post.save();
 
-            expect(await db.posts.count()).toEqual(1, "Updates record");
+            expect(await db.posts.count(), "Updates record").toEqual(1, );
 
             let post2 = new PostModel({
                 title: 'Hello World',
@@ -100,7 +102,7 @@ describe('Queries', () => {
             expect(post2).toBeDefined();
             expect(post2.title).toEqual('Hello World');
             await post2.save();
-            expect(await db.posts.count()).toEqual(2, 'Save another item');
+            expect(await db.posts.count(),  'Save another item').toEqual(2,);
 
         });
 
@@ -111,8 +113,8 @@ describe('Queries', () => {
         it('create new record', async function () {
             await db.table('posts').clear();
 
-            let post = await PostModel.create<PostModel>({
-                title: 
+            let post = await PostModel.create({
+                
             });
             expect(post).toBeDefined();
             expect(post.title).toEqual('Foo');
@@ -141,8 +143,8 @@ describe('Queries', () => {
         it('return record', async function () {
             let post = await PostModel.find(1);
             expect(post).toBeInstanceOf(PostModel);
-            expect(post.title).toEqual('Post 1');
-            expect(post.body).toEqual('Body of post 1');
+            expect(post?.title).toEqual('Post 1');
+            expect(post?.body).toEqual('Body of post 1');
         });
         it('return undefined for non existing', async function () {
             let post = await PostModel.find(55);
@@ -159,7 +161,7 @@ describe('Queries', () => {
                 title: 'Post 1'
             });
             expect(post).toBeInstanceOf(PostModel);
-            expect(post.title).toEqual('Post 1');
+            expect(post?.title).toEqual('Post 1');
         });
         it('return undefined for non existing', async function () {
             let post = await PostModel.first({
@@ -177,7 +179,7 @@ describe('Queries', () => {
                 title: 'Post 10'
             });
             expect(post).toBeInstanceOf(PostModel);
-            expect(post.title).toEqual('Post 10');
+            expect(post?.title).toEqual('Post 10');
         });
     });
 
@@ -198,7 +200,7 @@ describe('Queries', () => {
         });
 
         it('use offset', async function () {
-            let posts = await PostModel.all(null, 5, 2);
+            let posts = await PostModel.all({}, 5, 2);
             expect(posts).toHaveLength(5);
             expect(posts[0].title).toEqual('Post 6');
 
@@ -501,7 +503,7 @@ describe('Queries', () => {
         it('case sensitve match', async function () {
             await EmployeeModel.insertAll([
                 {
-                    name: 'John Doe'
+                    name: 'John Doe',
                 },
                 {
                     name: 'Micheal James'
@@ -623,7 +625,7 @@ describe('Queries', () => {
         it('delete record', async () => {
             let post = await PostModel.find(1);
             expect(post).toBeInstanceOf(PostModel);
-            await post.delete()
+            await post?.delete()
             let update = await PostModel.find(1);
 
             expect(update).toEqual(undefined);
@@ -649,7 +651,7 @@ describe('Queries', () => {
             expect(await db.employees.count()).toEqual(fixtures.employees.length);
 
             await EmployeeModel.insertAll(fixtures.employees);
-            expect(await db.employees.count()).toEqual(fixtures.employees.length, 'update existing');
+            expect(await db.employees.count(), 'update existing').toEqual(fixtures.employees.length);
 
         });
     });

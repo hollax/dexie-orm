@@ -17,14 +17,14 @@ const makeIndex = function (store:any, fn:Function, value: any) {
     return () => fn.call(store, store, value);
 };
 
-export type FilterHandler<T> = (Item: T)=> boolean;
+export type FilterHandler<T extends typeof Model> = (Item: T)=> boolean;
 
 export type FilterType = keyof typeof filters;
 
-export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
+export class QueryBuilder<T extends typeof Model = typeof Model, Key extends string = 'id'> {
 
     _tableStore: Dexie.Table<T, Key> ;
-    _currentKeyPath?: keyof T | string;
+    _currentKeyPath?: keyof InstanceType<T> | string;
     _primaryQueryAdded = false;
     _filters: FilterHandler<T>[] = [];
     _index = 0;
@@ -60,7 +60,7 @@ export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
         return this;
     }
 
-    where(keyPath: keyof T | string) {
+    where(keyPath: keyof InstanceType<T> | string) {
         if (this._index === 0) {
             this._whereBulder = this._tableStore.where(keyPath as string);
         }
@@ -68,7 +68,7 @@ export class QueryBuilder<T extends Model = Model, Key extends string = 'id'> {
         return this;
     }
 
-    and(keyPath: keyof T) {
+    and(keyPath: keyof InstanceType<T>) {
         if (this._index === 0) {
             throw new Error('Can not use .and() with first where condition')
         }

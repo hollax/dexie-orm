@@ -1,7 +1,7 @@
 import { defineConfig, resolveConfig } from 'vite'
 import path, { resolve } from 'node:path'
 
-export default defineConfig(async () => {
+export default defineConfig(() => {
 
   return {
 

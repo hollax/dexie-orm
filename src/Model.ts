@@ -1,16 +1,16 @@
 import Dexie from '../node_modules/dexie/dist/dexie';
 import {FilterHandler, QueryBuilder} from './QueryBuilder';
-import { SchemaConfig } from './types';
+import { ColumnName, SchemaConfig, TableData, WhereParameter } from './types';
 
 let lastInserts: Record<string, string | number> = {};
-
-export type WhereParam =  Record<string, any>;
 
 export type ModelStatic = {
     getTableConnection(): Dexie.Table,
     _getSaveData(obj: Model, data?: Record<string, any>): Record<string, any>,
     setLastInsert(key: number):void
 }
+
+
 export class Model {
 
 
@@ -53,7 +53,7 @@ export class Model {
     }
 
 
-    static create<T extends typeof Model>(this: T, data: Record<string, any>) {
+    static create<T extends typeof Model, M extends InstanceType<T>>(this: T, data: TableData<M>) {
         var table = this.getTableConnection();
         let item = new this();
         item.populate(data);
@@ -125,11 +125,11 @@ export class Model {
         return table.delete(this.id);
     }
 
-    protected static _where(builder: QueryBuilder<Model, 'id'>, where?: WhereParam){
+    protected static _where<T extends typeof Model, M extends InstanceType<T>>(builder: QueryBuilder<T, 'id'>, where?: WhereParameter<M>){
         let _result = builder;
         if (where) {
             for(let key in where){
-                _result = builder.where(key as keyof Model).equals(where[key]);
+                _result = builder.where(key as keyof Model).equals(where[key as keyof WhereParameter<M>]);
             }
         }
         return _result;
@@ -149,14 +149,14 @@ export class Model {
     * Retrive single record 
     * @returns {Promise} reolves to model instance
     */
-    static first<T extends typeof Model>(this: T, where?: WhereParam){
+    static first<T extends typeof Model, M extends InstanceType<T>>(this: T, where?: WhereParameter<M>){
         let builder = this.getQueryBuilder();
-        this._where(builder, where);
+        this._where<T, M>(builder, where);
        
         return builder.first() as Promise<InstanceType<T> | undefined>;
     }
 
-    static last<T extends typeof Model>(this: T, where?: WhereParam) {
+    static last<T extends typeof Model, M extends InstanceType<T>>(this: T, where?: WhereParameter<M>) {
         let builder = this.getQueryBuilder();
         this._where(builder, where);
 
@@ -169,25 +169,19 @@ export class Model {
      * @param {Object} where Where parameter
      @returns {Promise} count promise
      */
-    static count(where?: WhereParam) {
+    static count<T extends typeof Model,M extends InstanceType<T>>(this: T, where?: WhereParameter<M>) {
         var builder = this.getQueryBuilder();
         this._where(builder, where);
       
         return builder.count();
     }
 
-    /**
-     * Count record
-     * @param {String} column
-     * @param {Mixed} value
-     * @param {Function} filter
-     @returns {Promise} count promise
-     */
-    static countIn(column: string, values: any[], filter?: FilterHandler<Model>) {
+    
+    static countIn<T extends typeof Model, M extends InstanceType<T>>(this: T, column: ColumnName<M>, values: any[], filter?: FilterHandler<T>) {
 
         var table = this.getTableConnection();
 
-        let collection = table.where(column).anyOf(values);
+        let collection = table.where(column as string).anyOf(values);
 
         if (filter) {
             collection = collection.and(filter);
@@ -199,7 +193,7 @@ export class Model {
     /**
  * Get multiple record
  */
-    static fetch<T extends typeof Model>(builder:QueryBuilder, limit?: number, page?:number, order?: string, desc?:boolean) {
+    static fetch<T extends typeof Model, M extends InstanceType<T>>(builder:QueryBuilder<T>, limit?: number, page?:number, order?: ColumnName<M>, desc?:boolean) {
 
         if (page && limit) {
             var offset = (page - 1) * limit;
@@ -211,7 +205,7 @@ export class Model {
         }
 
         if (order) {
-            builder.sortBy(order, desc);
+            builder.sortBy(order as string, desc);
         }
 
 
@@ -223,7 +217,7 @@ export class Model {
      * Get multiple records
      
      */
-    static all<T extends typeof Model>(this: T, where?:WhereParam, limit?:number, page?:number, order?:string, desc?:boolean) {
+    static all<T extends typeof Model,M extends InstanceType<T>>(this: T, where?:WhereParameter<M> | null, limit?:number, page?:number, order?: ColumnName<M>, desc?:boolean) {
 
 
         let builder = this.getQueryBuilder();
@@ -240,7 +234,7 @@ export class Model {
      * @param callback 
      * @returns 
      */
-    static filter(callback: FilterHandler<Model>) {
+    static filter<T extends typeof Model>(this:T, callback: FilterHandler<T>) {
         return this.getQueryBuilder().filter(callback);
     }
 
@@ -249,10 +243,10 @@ export class Model {
      * @param index 
      * @returns 
      */
-    static where(column: string) {
+    static where<T extends typeof Model, M extends InstanceType<T>>(this: T, column: ColumnName<M>) {
 
-        const builder = this.getQueryBuilder()
-        builder.where(column)
+        const builder = this.getQueryBuilder<T>()
+        builder.where(column as string)
 
         return builder;
     }
@@ -264,26 +258,26 @@ export class Model {
      * @param values 
      * @returns 
      */
-    static whereIn(key: string, values: any[]) {
+    static whereIn<T extends typeof Model, M extends InstanceType<T>>(this:T, key: ColumnName<M>, values: any[]) {
 
         let builder = this.getQueryBuilder();
 
-        return builder.where(key).anyOf(values).all();
+        return builder.where(key as string).anyOf(values).all();
     }
 
 
-    static whereNotIn(key: string, values: any[]) {
+    static whereNotIn<T extends typeof Model, M extends InstanceType<T>>(this: T, key: ColumnName<M>, values: any[]) {
 
         let builder = this.getQueryBuilder();
 
-        return builder.where(key).noneOf(values).all();
+        return builder.where(key as string).noneOf(values).all();
     }
 
     /**
      * Insert mutiple record
      * @param {Object} data
      */
-    static insertAll(data: Record<string, any>[]) {
+    static insertAll<T extends typeof Model, M extends InstanceType<T>>(this: T, data: TableData<M>[]) {
 
         var table = this.getTableConnection();
         let p = table?.bulkPut(data);
@@ -298,7 +292,7 @@ export class Model {
      * Update Bulk
      * @param {any} data
      */
-    static updateAll(data: Record<string, any>[]) {
+    static updateAll<T extends typeof Model, M extends InstanceType<T>>(this: T, data: TableData<M>[]) {
         var table = this.getTableConnection();
         return table.bulkPut(data);
     }
@@ -361,7 +355,7 @@ export class Model {
     /**
      * Get query builder
      */
-    static getQueryBuilder<T extends Model = Model, Key extends string = 'id'>() {
+    static getQueryBuilder<T extends typeof Model, Key extends string = 'id'>(this: T) {
         const conn = this.getTableConnection();
         return new QueryBuilder<T, Key>(conn);
     }
@@ -370,8 +364,8 @@ export class Model {
      * 
      * @returns {Dexie.table}
      */
-    static query() {
-        return this.getQueryBuilder();
+    static query<T extends typeof Model>(this: T) {
+        return this.getQueryBuilder<T, 'id'>();
     }
 
 

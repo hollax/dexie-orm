@@ -6,7 +6,7 @@ import { DexieModelStatic, SchemaConfig } from "./types";
  * @param {Dexie} db 
  * @param {Object} db Key value pair table name key and model class as value  
  */
-export const  setup = (db: any, models: ((new () => Model) & DexieModelStatic)[])=> {
+export const  setup = (db: any, models: ((new () => Model) & DexieModelStatic<typeof Model>)[])=> {
 
     /**
      * Group model schema by version
