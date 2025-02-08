@@ -1,10 +1,9 @@
 {
   "name": "@hollax/dexie-orm",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "Simple ORM for dexie js",
   "main": "dist/cjs/index.cjs",
   "private": false,
-  "type": "module",
   "module": "lib/index.js",
   "types": "dist/types",
   "esnext": "lib/index.js",
