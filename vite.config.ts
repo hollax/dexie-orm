@@ -42,6 +42,14 @@ export default defineConfig(() => {
             minifyInternalExports:false,
             
           },
+          {
+            format: 'umd',
+            dir: 'dist/umd',
+            name: 'DexieOrm',
+            entryFileNames: '[name].js',
+            chunkFileNames: '[name].js',           
+            exports: 'named',
+          }
         ],
       }
     }
