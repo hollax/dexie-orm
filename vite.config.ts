@@ -43,6 +43,14 @@ export default defineConfig(() => {
             
           },
           {
+            format: 'cjs',
+            dir: 'dist/cjs',
+            entryFileNames: '[name].cjs',
+            chunkFileNames: '[name].cjs',
+            assetFileNames: 'assets/[name].[ext]',
+            exports: 'named',
+          },
+          {
             format: 'umd',
             dir: 'dist/umd',
             name: 'DexieOrm',
