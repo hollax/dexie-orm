@@ -114,7 +114,7 @@ describe('Queries', () => {
             await db.table('posts').clear();
 
             let post = await PostModel.create({
-                
+                title: 'Foo'
             });
             expect(post).toBeDefined();
             expect(post.title).toEqual('Foo');

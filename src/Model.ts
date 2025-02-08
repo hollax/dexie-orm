@@ -43,6 +43,7 @@ export class Model {
                 self[i as keyof Model] = data[i];
             }
         }
+        return this;
     }
 
     _beforeSave() {
