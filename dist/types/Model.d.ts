@@ -20,7 +20,7 @@ export declare class Model {
      */
     constructor(data?: {});
     static get connection(): Dexie.Table<any, any, any> | undefined;
-    populate(data: Record<string, any>): void;
+    populate(data: Record<string, any>): this;
     _beforeSave(): void;
     _afterSave(): void;
     static create<T extends typeof Model, M extends InstanceType<T>>(this: T, data: TableData<M>): Promise<InstanceType<T>>;
@@ -35,7 +35,7 @@ export declare class Model {
     @returns {Promise} delete promise
      */
     delete(): any;
-    protected static _where<T extends typeof Model, M extends InstanceType<T>>(builder: QueryBuilder<T, 'id'>, where?: WhereParameter<M>): QueryBuilder<T, "id">;
+    protected static _where<T extends typeof Model, M extends InstanceType<T>>(builder: QueryBuilder<T, 'id'>, where?: WhereParameter<M>): QueryBuilder<T, "id", InstanceType<T>>;
     /**
      * Retrive single record
      * @param {Number|String} id Record id
@@ -54,7 +54,7 @@ export declare class Model {
      @returns {Promise} count promise
      */
     static count<T extends typeof Model, M extends InstanceType<T>>(this: T, where?: WhereParameter<M>): Promise<number>;
-    static countIn<T extends typeof Model, M extends InstanceType<T>>(this: T, column: ColumnName<M>, values: any[], filter?: FilterHandler<T>): import("../node_modules/dexie/dist/dexie").PromiseExtended<number>;
+    static countIn<T extends typeof Model, M extends InstanceType<T>>(this: T, column: ColumnName<M>, values: any[], filter?: FilterHandler<T, M>): import("../node_modules/dexie/dist/dexie").PromiseExtended<number>;
     /**
  * Get multiple record
  */
@@ -69,13 +69,13 @@ export declare class Model {
      * @param callback
      * @returns
      */
-    static filter<T extends typeof Model>(this: T, callback: FilterHandler<T>): QueryBuilder<T, "id">;
+    static filter<T extends typeof Model>(this: T, callback: FilterHandler<T, InstanceType<T>>): QueryBuilder<T, "id", InstanceType<T>>;
     /**
      * Create a query builder
      * @param index
      * @returns
      */
-    static where<T extends typeof Model, M extends InstanceType<T>>(this: T, column: ColumnName<M>): QueryBuilder<T, "id">;
+    static where<T extends typeof Model, M extends InstanceType<T>>(this: T, column: ColumnName<M>): QueryBuilder<T, "id", InstanceType<T>>;
     /**
      * Where in clause
      * @param key
@@ -126,12 +126,12 @@ export declare class Model {
     /**
      * Get query builder
      */
-    static getQueryBuilder<T extends typeof Model, Key extends string = 'id'>(this: T): QueryBuilder<T, Key>;
+    static getQueryBuilder<T extends typeof Model, Key extends string = 'id'>(this: T): QueryBuilder<T, Key, InstanceType<T>>;
     /**
      *
      * @returns {Dexie.table}
      */
-    static query<T extends typeof Model>(this: T): QueryBuilder<T, "id">;
+    static query<T extends typeof Model>(this: T): QueryBuilder<T, "id", InstanceType<T>>;
     /**
      *
      * @returns {}

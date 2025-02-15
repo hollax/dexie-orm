@@ -17,16 +17,16 @@ const makeIndex = function (store:any, fn:Function, value: any) {
     return () => fn.call(store, store, value);
 };
 
-export type FilterHandler<T extends typeof Model> = (Item: T)=> boolean;
+export type FilterHandler<T extends typeof Model, M extends InstanceType<T>> = (Item: M)=> any;
 
 export type FilterType = keyof typeof filters;
 
-export class QueryBuilder<T extends typeof Model = typeof Model, Key extends string = 'id'> {
+export class QueryBuilder<T extends typeof Model = typeof Model, Key extends string = 'id', M extends InstanceType<T> =  InstanceType<T>> {
 
     _tableStore: Dexie.Table<T, Key> ;
-    _currentKeyPath?: keyof InstanceType<T> | string;
+    _currentKeyPath?: keyof M | string;
     _primaryQueryAdded = false;
-    _filters: FilterHandler<T>[] = [];
+    _filters: FilterHandler<T, M>[] = [];
     _index = 0;
     _whereBulder? : any;
     _collection? : ()=> Dexie.Collection<T, Key>;
@@ -60,7 +60,7 @@ export class QueryBuilder<T extends typeof Model = typeof Model, Key extends str
         return this;
     }
 
-    where(keyPath: keyof InstanceType<T> | string) {
+    where(keyPath: keyof M | string) {
         if (this._index === 0) {
             this._whereBulder = this._tableStore.where(keyPath as string);
         }
@@ -68,7 +68,7 @@ export class QueryBuilder<T extends typeof Model = typeof Model, Key extends str
         return this;
     }
 
-    and(keyPath: keyof InstanceType<T>) {
+    and(keyPath: keyof M) {
         if (this._index === 0) {
             throw new Error('Can not use .and() with first where condition')
         }
@@ -115,7 +115,7 @@ export class QueryBuilder<T extends typeof Model = typeof Model, Key extends str
 
     like(value: any) {
        var q = value && value.toUpperCase();
-       var key = this._currentKeyPath as keyof T;
+       var key = this._currentKeyPath as keyof InstanceType<T>;
         return this.filter((item)=>{
             return item[key] && (item[key] as string).toUpperCase().indexOf(q) !== -1;
         });
@@ -150,7 +150,7 @@ export class QueryBuilder<T extends typeof Model = typeof Model, Key extends str
         return this._processFilter('startsWithIgnoreCase', value);
     }
 
-    filter(callback: FilterHandler<T>) {
+    filter(callback: FilterHandler<T, M>) {
         if (typeof callback === 'function') {
             this._filters.push(callback);
         }
@@ -236,7 +236,7 @@ export class QueryBuilder<T extends typeof Model = typeof Model, Key extends str
                 collection = this._tableStore;
             }
             //call all callback fns on object
-            collection = collection.filter((obj: T) => {
+            collection = collection.filter((obj: M) => {
                 let noMath = this._filters.findIndex(fn => !fn(obj));
                 return noMath === -1;
             });

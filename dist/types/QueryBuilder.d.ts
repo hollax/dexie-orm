@@ -1,13 +1,13 @@
 import Dexie from "../node_modules/dexie/dist/dexie";
 import { filters } from "./filters";
 import type { Model } from "./Model";
-export type FilterHandler<T extends typeof Model> = (Item: T) => boolean;
+export type FilterHandler<T extends typeof Model, M extends InstanceType<T>> = (Item: M) => any;
 export type FilterType = keyof typeof filters;
-export declare class QueryBuilder<T extends typeof Model = typeof Model, Key extends string = 'id'> {
+export declare class QueryBuilder<T extends typeof Model = typeof Model, Key extends string = 'id', M extends InstanceType<T> = InstanceType<T>> {
     _tableStore: Dexie.Table<T, Key>;
-    _currentKeyPath?: keyof InstanceType<T> | string;
+    _currentKeyPath?: keyof M | string;
     _primaryQueryAdded: boolean;
-    _filters: FilterHandler<T>[];
+    _filters: FilterHandler<T, M>[];
     _index: number;
     _whereBulder?: any;
     _collection?: () => Dexie.Collection<T, Key>;
@@ -20,8 +20,8 @@ export declare class QueryBuilder<T extends typeof Model = typeof Model, Key ext
     limit(limit: number): this;
     sortBy(key: string, desc?: boolean): this;
     reverse(): this;
-    where(keyPath: keyof InstanceType<T> | string): this;
-    and(keyPath: keyof InstanceType<T>): this;
+    where(keyPath: keyof M | string): this;
+    and(keyPath: keyof M): this;
     above(value: number): this;
     aboveOrEqual(value: number): this;
     anyOf(values: any[]): this;
@@ -39,7 +39,7 @@ export declare class QueryBuilder<T extends typeof Model = typeof Model, Key ext
     startsWithAnyOf(values: string[] | number[]): this;
     startsWithAnyOfIgnoreCase(values: any[]): this;
     startsWithIgnoreCase(value: any): this;
-    filter(callback: FilterHandler<T>): this;
+    filter(callback: FilterHandler<T, M>): this;
     count(): Promise<number>;
     first(): Promise<any>;
     last(): import("../node_modules/dexie/dist/dexie").PromiseExtended<any> | Promise<Model>;
