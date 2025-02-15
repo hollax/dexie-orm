@@ -178,7 +178,7 @@ export class Model {
     }
 
     
-    static countIn<T extends typeof Model, M extends InstanceType<T>>(this: T, column: ColumnName<M>, values: any[], filter?: FilterHandler<T>) {
+    static countIn<T extends typeof Model, M extends InstanceType<T>>(this: T, column: ColumnName<M>, values: any[], filter?: FilterHandler<T, M>) {
 
         var table = this.getTableConnection();
 
@@ -235,7 +235,7 @@ export class Model {
      * @param callback 
      * @returns 
      */
-    static filter<T extends typeof Model>(this:T, callback: FilterHandler<T>) {
+    static filter<T extends typeof Model>(this:T, callback: FilterHandler<T, InstanceType<T>>) {
         return this.getQueryBuilder().filter(callback);
     }
 

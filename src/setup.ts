@@ -66,5 +66,3 @@ export const  setup = (db: any, models: ((new () => Model) & DexieModelStatic<ty
         modelClass.getTableConnection().mapToClass(modelClass as any);
     }
 }
-
-module.exports = setup;
