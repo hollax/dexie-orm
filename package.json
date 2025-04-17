@@ -5,9 +5,20 @@
   "main": "lib/index.js",
   "private": false,
   "module": "lib/index.js",
-  "types": "dist/types",
-  "esnext": "lib/index.js",
+  "types": "dist/types/index.d.ts",
+  "esnext": "dist/lib/index.js",
   "files": ["lib", "dist/types"],
+  "type": "module",
+  "exports":{
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./*": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./lib/*"
+    }
+  },
   "scripts": {
     "test": "vitest",
     "dev": "vite",
